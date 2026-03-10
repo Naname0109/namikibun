@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd C:/Users/tubak/Documents/AppFactory/namikibun && mkdir -p lib/constants lib/models lib/providers lib/repositories lib/services lib/screens lib/widgets lib/theme lib/utils)",
+      "Bash(cd C:/Users/tubak/Documents/AppFactory/namikibun && flutter pub get 2>&1)",
+      "Bash(cd C:/Users/tubak/Documents/AppFactory/namikibun && dart run build_runner build --delete-conflicting-outputs 2>&1)",
+      "Bash(cd C:/Users/tubak/Documents/AppFactory/namikibun && flutter analyze 2>&1)"
+    ]
+  }
+}
