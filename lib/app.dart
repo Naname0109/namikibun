@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:namikibun/providers/theme_provider.dart';
 import 'package:namikibun/screens/home_screen.dart';
 import 'package:namikibun/screens/calendar_screen.dart';
 import 'package:namikibun/screens/stats_screen.dart';
 import 'package:namikibun/screens/settings_screen.dart';
+import 'package:namikibun/theme/app_theme.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -109,20 +112,19 @@ class ScaffoldWithBottomNav extends StatelessWidget {
   }
 }
 
-class NamikibunApp extends StatelessWidget {
+class NamikibunApp extends ConsumerWidget {
   const NamikibunApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+
     return MaterialApp.router(
       title: '波きぶん',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4A90D9),
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeMode,
       routerConfig: goRouter,
     );
   }

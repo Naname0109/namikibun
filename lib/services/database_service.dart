@@ -195,6 +195,31 @@ class DatabaseService {
     );
   }
 
+  /// スロットのorder_indexを一括更新（トランザクション）
+  Future<void> reorderSlots(List<Slot> slots) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      for (int i = 0; i < slots.length; i++) {
+        await txn.update(
+          'slots',
+          {'order_index': i},
+          where: 'id = ?',
+          whereArgs: [slots[i].id],
+        );
+      }
+    });
+  }
+
+  /// アクティブスロットの最大order_indexを取得
+  Future<int> getMaxOrderIndex() async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT MAX(order_index) as max_index FROM slots WHERE is_deleted = 0',
+    );
+    final maxIndex = result.first['max_index'];
+    return maxIndex != null ? (maxIndex as int) : -1;
+  }
+
   /// 今日から遡って連続記録日数を計算する
   Future<int> getConsecutiveRecordDays(String todayDate) async {
     final db = await database;
