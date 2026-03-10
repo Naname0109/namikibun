@@ -168,6 +168,7 @@ class _SlotManagement extends ConsumerWidget {
         content: TextField(
           controller: controller,
           autofocus: true,
+          maxLength: 20,
           decoration: const InputDecoration(
             labelText: 'スロット名',
             border: OutlineInputBorder(),
@@ -226,6 +227,7 @@ class _SlotManagement extends ConsumerWidget {
         content: TextField(
           controller: controller,
           autofocus: true,
+          maxLength: 20,
           decoration: const InputDecoration(
             labelText: 'スロット名',
             hintText: '例: 仕事後',

@@ -237,10 +237,11 @@ class _SlotCardList extends ConsumerWidget {
                   existingRecord: record,
                 ),
                 onDelete: () async {
-                  if (record != null) {
+                  final id = record?.id;
+                  if (id != null) {
                     await ref
                         .read(moodRecordsProvider.notifier)
-                        .deleteRecord(record.id!);
+                        .deleteRecord(id);
                   }
                 },
               );

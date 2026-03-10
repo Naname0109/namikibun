@@ -19,7 +19,7 @@ class MoodRecordsNotifier extends AsyncNotifier<List<MoodRecord>> {
   @override
   Future<List<MoodRecord>> build() async {
     final date = ref.watch(selectedDateProvider);
-    final dateString = AppDateUtils.formatLogicalDate(date);
+    final dateString = AppDateUtils.formatDate(date);
     return await DatabaseService().getMoodRecordsByDate(dateString);
   }
 

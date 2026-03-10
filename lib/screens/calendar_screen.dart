@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/providers/mood_provider.dart';
 import 'package:namikibun/utils/date_utils.dart';
-import 'package:namikibun/widgets/empty_state.dart';
 import 'package:namikibun/widgets/mini_wave_painter.dart';
 
 class CalendarScreen extends ConsumerWidget {
@@ -229,14 +228,6 @@ class _CalendarGrid extends StatelessWidget {
     final startWeekday = (firstDayOfMonth.weekday - 1) % 7;
 
     final today = AppDateUtils.getLogicalToday();
-    final hasAnyRecords = recordsMap.isNotEmpty;
-
-    if (!hasAnyRecords) {
-      return const EmptyState(
-        icon: Icons.calendar_month,
-        message: 'まだ記録がありません',
-      );
-    }
 
     return GridView.builder(
       padding: const EdgeInsets.all(8),

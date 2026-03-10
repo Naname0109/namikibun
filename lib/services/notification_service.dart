@@ -94,11 +94,12 @@ class NotificationService {
 
   /// スロットのリマインダーをスケジュール
   Future<void> scheduleSlotReminder(Slot slot) async {
-    if (!slot.notifyEnabled || slot.notifyTime == null) return;
+    final notifyTime = slot.notifyTime;
+    if (!slot.notifyEnabled || notifyTime == null) return;
 
     await initialize();
 
-    final parts = slot.notifyTime!.split(':');
+    final parts = notifyTime.split(':');
     final hour = int.parse(parts[0]);
     final minute = int.parse(parts[1]);
 

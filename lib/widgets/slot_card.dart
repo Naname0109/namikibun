@@ -64,13 +64,17 @@ class SlotCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
-              slot.name,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            Expanded(
+              child: Text(
+                slot.name,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Spacer(),
+            const SizedBox(width: 4),
             Text(emoji, style: const TextStyle(fontSize: 24)),
           ],
         ),
@@ -142,6 +146,8 @@ class SlotCard extends StatelessWidget {
           style: theme.textTheme.labelMedium?.copyWith(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         if (slot.startTime != null && slot.endTime != null)
           Text(
