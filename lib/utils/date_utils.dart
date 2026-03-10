@@ -44,4 +44,19 @@ class AppDateUtils {
         logicalA.month == logicalB.month &&
         logicalA.day == logicalB.day;
   }
+
+  static const _weekdays = ['月', '火', '水', '木', '金', '土', '日'];
+
+  /// 「3月10日 火曜日」形式の表示用文字列を返す
+  static String formatDisplayDate(DateTime date) {
+    final weekday = _weekdays[date.weekday - 1];
+    return '${date.month}月${date.day}日 $weekday曜日';
+  }
+
+  /// DateTimeを yyyy-MM-dd 文字列に変換する（論理日付変換なし）
+  static String formatDate(DateTime date) {
+    return '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+  }
 }
