@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/providers/stats_provider.dart';
 import 'package:namikibun/utils/date_utils.dart';
+import 'package:namikibun/widgets/ad_banner.dart';
 import 'package:namikibun/widgets/empty_state.dart';
 
 class StatsScreen extends ConsumerWidget {
@@ -56,6 +57,9 @@ class StatsScreen extends ConsumerWidget {
               error: (e, _) => Center(child: Text('エラー: $e')),
             ),
           ),
+
+          // バナー広告
+          const AdBanner(),
         ],
       ),
     );

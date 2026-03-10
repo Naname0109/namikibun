@@ -6,6 +6,7 @@ import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/models/slot.dart';
 import 'package:namikibun/providers/mood_provider.dart';
 import 'package:namikibun/widgets/mood_selector.dart';
+import 'package:namikibun/widgets/particle_effect.dart';
 
 /// 記録入力ボトムシートを表示する
 Future<void> showRecordBottomSheet(
@@ -50,6 +51,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
   late TextEditingController _memoController;
   final Set<String> _selectedTags = {};
   bool _isSaving = false;
+  final _saveButtonKey = GlobalKey();
 
   bool get isEditing => widget.existingRecord != null;
 
@@ -104,7 +106,11 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
         );
       }
 
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        showParticleEffect(context, _saveButtonKey);
+        await Future.delayed(const Duration(milliseconds: 400));
+        if (mounted) Navigator.pop(context);
+      }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -193,6 +199,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
 
           // 保存ボタン
           SizedBox(
+            key: _saveButtonKey,
             width: double.infinity,
             child: FilledButton(
               onPressed: _selectedMoodLevel != null && !_isSaving

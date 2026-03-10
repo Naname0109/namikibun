@@ -7,6 +7,7 @@ import 'package:namikibun/providers/mood_provider.dart';
 import 'package:namikibun/providers/slot_provider.dart';
 import 'package:namikibun/screens/record_bottom_sheet.dart';
 import 'package:namikibun/utils/date_utils.dart';
+import 'package:namikibun/widgets/ad_banner.dart';
 import 'package:namikibun/widgets/empty_state.dart';
 import 'package:namikibun/widgets/slot_card.dart';
 import 'package:namikibun/widgets/wave_chart.dart';
@@ -92,6 +93,9 @@ class HomeScreen extends ConsumerWidget {
               error: (e, _) => Center(child: Text('エラー: $e')),
             ),
           ),
+
+          // バナー広告
+          const AdBanner(),
         ],
       ),
     );

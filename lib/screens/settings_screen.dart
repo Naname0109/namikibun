@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:namikibun/models/slot.dart';
+import 'package:namikibun/providers/purchase_provider.dart';
 import 'package:namikibun/providers/slot_provider.dart';
 import 'package:namikibun/providers/theme_provider.dart';
 import 'package:namikibun/services/notification_service.dart';
+import 'package:namikibun/services/purchase_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -53,14 +55,9 @@ class SettingsScreen extends ConsumerWidget {
 
           const Divider(height: 32),
 
-          // 広告除去（Day 5で実装）
+          // 広告除去
           _SectionHeader(title: '広告除去'),
-          const ListTile(
-            leading: Icon(Icons.remove_circle_outline),
-            title: Text('広告を除去'),
-            subtitle: Text('準備中'),
-            enabled: false,
-          ),
+          const _AdRemovalTile(),
 
           const Divider(height: 32),
 
@@ -363,6 +360,49 @@ class _ThemeSelector extends ConsumerWidget {
           ref.read(themeModeProvider.notifier).setThemeMode(selected.first);
         },
       ),
+    );
+  }
+}
+
+// --- 広告除去 ---
+
+class _AdRemovalTile extends ConsumerWidget {
+  const _AdRemovalTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdRemoved = ref.watch(isAdRemovedProvider);
+    final product = PurchaseService().product;
+
+    if (isAdRemoved) {
+      return const ListTile(
+        leading: Icon(Icons.check_circle, color: Colors.green),
+        title: Text('広告除去済み'),
+        subtitle: Text('すべての広告が非表示になっています'),
+      );
+    }
+
+    return Column(
+      children: [
+        ListTile(
+          leading: const Icon(Icons.remove_circle_outline),
+          title: const Text('広告を除去'),
+          subtitle: Text(product != null ? product.price : '読み込み中...'),
+          trailing: FilledButton(
+            onPressed: product != null
+                ? () =>
+                    ref.read(isAdRemovedProvider.notifier).purchaseRemoveAds()
+                : null,
+            child: const Text('購入'),
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.restore),
+          title: const Text('購入を復元'),
+          onTap: () =>
+              ref.read(isAdRemovedProvider.notifier).restorePurchases(),
+        ),
+      ],
     );
   }
 }

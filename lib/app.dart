@@ -12,6 +12,33 @@ import 'package:namikibun/theme/app_theme.dart';
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+CustomTransitionPage _fadeSlideTransitionPage({
+  required LocalKey key,
+  required Widget child,
+}) {
+  return CustomTransitionPage(
+    key: key,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 300),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curvedAnimation = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeInOut,
+      );
+      return FadeTransition(
+        opacity: curvedAnimation,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.05, 0),
+            end: Offset.zero,
+          ).animate(curvedAnimation),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
 final goRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/home',
@@ -24,26 +51,30 @@ final goRouter = GoRouter(
       routes: [
         GoRoute(
           path: '/home',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: HomeScreen(),
+          pageBuilder: (context, state) => _fadeSlideTransitionPage(
+            key: state.pageKey,
+            child: const HomeScreen(),
           ),
         ),
         GoRoute(
           path: '/calendar',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: CalendarScreen(),
+          pageBuilder: (context, state) => _fadeSlideTransitionPage(
+            key: state.pageKey,
+            child: const CalendarScreen(),
           ),
         ),
         GoRoute(
           path: '/stats',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: StatsScreen(),
+          pageBuilder: (context, state) => _fadeSlideTransitionPage(
+            key: state.pageKey,
+            child: const StatsScreen(),
           ),
         ),
         GoRoute(
           path: '/settings',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: SettingsScreen(),
+          pageBuilder: (context, state) => _fadeSlideTransitionPage(
+            key: state.pageKey,
+            child: const SettingsScreen(),
           ),
         ),
       ],
