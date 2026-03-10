@@ -26,15 +26,67 @@ class MoodRecordsNotifier extends AsyncNotifier<List<MoodRecord>> {
   Future<void> addRecord(MoodRecord record) async {
     await DatabaseService().insertMoodRecord(record);
     ref.invalidateSelf();
+    // カレンダーキャッシュも無効化
+    ref.invalidate(calendarRecordsProvider);
+    ref.invalidate(consecutiveRecordDaysProvider);
   }
 
   Future<void> updateRecord(MoodRecord record) async {
     await DatabaseService().updateMoodRecord(record);
     ref.invalidateSelf();
+    ref.invalidate(calendarRecordsProvider);
   }
 
   Future<void> deleteRecord(int id) async {
     await DatabaseService().deleteMoodRecord(id);
     ref.invalidateSelf();
+    ref.invalidate(calendarRecordsProvider);
+    ref.invalidate(consecutiveRecordDaysProvider);
   }
 }
+
+/// カレンダー表示月
+final selectedMonthProvider = StateProvider<DateTime>((ref) {
+  final now = AppDateUtils.getLogicalToday();
+  return DateTime(now.year, now.month);
+});
+
+/// カレンダー用: 表示月の全記録を日付ごとにグルーピング（スロットorder_index順）
+final calendarRecordsProvider =
+    FutureProvider<Map<String, List<MoodRecord>>>((ref) async {
+  final month = ref.watch(selectedMonthProvider);
+  final startDate = DateTime(month.year, month.month, 1);
+  final endDate = DateTime(month.year, month.month + 1, 0); // 月末
+
+  final startStr = AppDateUtils.formatDate(startDate);
+  final endStr = AppDateUtils.formatDate(endDate);
+
+  final db = DatabaseService();
+  final records = await db.getMoodRecordsByDateRange(startStr, endStr);
+  final slots = await db.getActiveSlots();
+
+  // slotIdからorder_indexへのマップ
+  final slotOrder = <String, int>{};
+  for (final slot in slots) {
+    slotOrder[slot.id] = slot.orderIndex;
+  }
+
+  final grouped = <String, List<MoodRecord>>{};
+  for (final record in records) {
+    grouped.putIfAbsent(record.date, () => []).add(record);
+  }
+
+  // 各日の記録をスロットのorder_index順にソート
+  for (final entry in grouped.entries) {
+    entry.value.sort((a, b) =>
+        (slotOrder[a.slotId] ?? 0).compareTo(slotOrder[b.slotId] ?? 0));
+  }
+
+  return grouped;
+});
+
+/// 連続記録日数
+final consecutiveRecordDaysProvider = FutureProvider<int>((ref) async {
+  final todayStr = AppDateUtils.getLogicalTodayString();
+  return await DatabaseService().getConsecutiveRecordDays(todayStr);
+});

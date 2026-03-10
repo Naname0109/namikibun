@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/models/slot.dart';
+import 'package:namikibun/utils/date_utils.dart';
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -192,6 +193,38 @@ class DatabaseService {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  /// 今日から遡って連続記録日数を計算する
+  Future<int> getConsecutiveRecordDays(String todayDate) async {
+    final db = await database;
+    // 直近90日分の記録がある日付を取得（十分なバッファ）
+    final date = DateTime.parse(todayDate);
+    final startDate = date.subtract(const Duration(days: 90));
+    final startDateStr = AppDateUtils.formatDate(startDate);
+
+    final result = await db.rawQuery(
+      'SELECT DISTINCT date FROM mood_records WHERE date >= ? AND date <= ? ORDER BY date DESC',
+      [startDateStr, todayDate],
+    );
+
+    if (result.isEmpty) return 0;
+
+    final recordedDates = result.map((r) => r['date'] as String).toSet();
+    int count = 0;
+    var checkDate = date;
+
+    while (true) {
+      final checkStr = AppDateUtils.formatDate(checkDate);
+      if (recordedDates.contains(checkStr)) {
+        count++;
+        checkDate = checkDate.subtract(const Duration(days: 1));
+      } else {
+        break;
+      }
+    }
+
+    return count;
   }
 
   // --- Map変換ヘルパー ---

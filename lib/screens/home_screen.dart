@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/models/slot.dart';
 import 'package:namikibun/providers/mood_provider.dart';
@@ -10,6 +9,7 @@ import 'package:namikibun/screens/record_bottom_sheet.dart';
 import 'package:namikibun/utils/date_utils.dart';
 import 'package:namikibun/widgets/empty_state.dart';
 import 'package:namikibun/widgets/slot_card.dart';
+import 'package:namikibun/widgets/wave_chart.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -46,25 +46,29 @@ class HomeScreen extends ConsumerWidget {
           // 波形グラフエリア（画面上部40%）
           Expanded(
             flex: 4,
-            child: recordsAsync.when(
-              data: (records) {
-                if (records.isEmpty) {
-                  return EmptyState(
-                    icon: Icons.waves,
-                    message: '最初の気分を記録してみましょう',
-                    actionLabel: '記録する',
-                    onAction: () => _openRecordSheet(
-                      context,
-                      ref,
-                      slotsAsync.valueOrNull?.firstOrNull,
-                      records,
-                      selectedDate,
-                    ),
-                  );
-                }
-                // Day 3で波形グラフを実装予定
-                return _WaveChartPlaceholder(records: records);
-              },
+            child: slotsAsync.when(
+              data: (slots) => recordsAsync.when(
+                data: (records) {
+                  if (records.isEmpty) {
+                    return EmptyState(
+                      icon: Icons.waves,
+                      message: '最初の気分を記録してみましょう',
+                      actionLabel: '記録する',
+                      onAction: () => _openRecordSheet(
+                        context,
+                        ref,
+                        slots.firstOrNull,
+                        records,
+                        selectedDate,
+                      ),
+                    );
+                  }
+                  return WaveChart(slots: slots, records: records);
+                },
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('エラー: $e')),
+              ),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('エラー: $e')),
             ),
@@ -164,62 +168,6 @@ class _DateHeader extends StatelessWidget {
             icon: const Icon(Icons.chevron_right),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _WaveChartPlaceholder extends StatelessWidget {
-  const _WaveChartPlaceholder({required this.records});
-
-  final List<MoodRecord> records;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 簡易的なドット表示（Day 3で波形グラフに置き換え）
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: records.map((r) {
-                final color = AppConstants.moodColors[r.moodLevel]!;
-                return Column(
-                  children: [
-                    Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      AppConstants.moodEmojis[r.moodLevel]!,
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                  ],
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '${records.length}件の記録',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
