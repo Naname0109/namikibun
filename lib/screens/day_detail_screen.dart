@@ -66,18 +66,8 @@ class DayDetailScreen extends ConsumerWidget {
                   data: (slots) => recordsAsync.when(
                     data: (records) {
                       if (records.isEmpty) {
-                        return EmptyState(
-                          message: '最初の気分を記録してみましょう',
-                          actionLabel: '記録する',
-                          onAction: () {
-                            if (slots.isNotEmpty) {
-                              showRecordBottomSheet(
-                                context,
-                                slot: slots.first,
-                                date: AppDateUtils.formatDate(selectedDate),
-                              );
-                            }
-                          },
+                        return const EmptyState(
+                          message: '気分を記録してみましょう',
                         );
                       }
                       return WaveChart(slots: slots, records: records);

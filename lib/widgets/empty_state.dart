@@ -19,30 +19,30 @@ class EmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // 寝ているなみちゃん
             CustomPaint(
-              size: const Size(100, 70),
+              size: const Size(80, 56),
               painter: _SleepingWavePainter(
                 color: theme.colorScheme.primary.withValues(alpha: 0.4),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Text(
               message,
-              style: theme.textTheme.bodyLarge?.copyWith(
+              style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
             ),
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
               FilledButton.icon(
                 onPressed: onAction,
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add, size: 18),
                 label: Text(actionLabel!),
               ),
             ],

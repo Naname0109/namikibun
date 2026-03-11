@@ -18,7 +18,7 @@ class SettingsScreen extends ConsumerWidget {
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           Text(
             '設定',
@@ -26,70 +26,98 @@ class SettingsScreen extends ConsumerWidget {
                   fontWeight: FontWeight.bold,
                 ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
           // スロット管理
-          _SettingsCard(
-            title: 'スロット管理',
+          _sectionTitle(context, 'スロット管理'),
+          _SectionCard(
             child: slotsAsync.when(
               data: (slots) => _SlotManagement(slots: slots),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('エラー: $e')),
+              loading: () => const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.all(16),
+                child: Center(child: Text('エラー: $e')),
+              ),
             ),
           ),
-          const SizedBox(height: DesignTokens.cardSpacing),
+          const SizedBox(height: 20),
 
           // 通知設定
-          _SettingsCard(
-            title: '通知設定',
+          _sectionTitle(context, '通知設定'),
+          _SectionCard(
             child: slotsAsync.when(
               data: (slots) => _NotificationSettings(slots: slots),
               loading: () => const SizedBox.shrink(),
               error: (_, _) => const SizedBox.shrink(),
             ),
           ),
-          const SizedBox(height: DesignTokens.cardSpacing),
+          const SizedBox(height: 20),
 
           // テーマ
-          _SettingsCard(
-            title: 'テーマ',
+          _sectionTitle(context, 'テーマ'),
+          _SectionCard(
             child: const _ThemeSelector(),
           ),
-          const SizedBox(height: DesignTokens.cardSpacing),
+          const SizedBox(height: 20),
 
           // 広告除去
-          _SettingsCard(
-            title: '広告除去',
+          _sectionTitle(context, '広告除去'),
+          _SectionCard(
             child: const _AdRemovalTile(),
           ),
-          const SizedBox(height: DesignTokens.cardSpacing),
+          const SizedBox(height: 20),
 
-          // アプリ情報
-          _SettingsCard(
-            title: 'アプリ情報',
+          // その他
+          _sectionTitle(context, 'その他'),
+          _SectionCard(
             child: Column(
               children: [
-                _InfoRow(label: 'バージョン', value: '1.0.0'),
-                const Divider(height: 1),
                 _InfoRow(
+                  icon: Icons.info_outline,
+                  label: 'バージョン',
+                  value: '1.0.0',
+                ),
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
+                  indent: 16,
+                  endIndent: 16,
+                ),
+                _InfoRow(
+                  icon: Icons.privacy_tip_outlined,
                   label: 'プライバシーポリシー',
                   subtitle: 'データはすべて端末内に保存されます',
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
         ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
       ),
     );
   }
 }
 
-/// セクションカード（角丸16px、ソフトシャドウ）
-class _SettingsCard extends StatelessWidget {
-  const _SettingsCard({required this.title, required this.child});
+/// セクションカード（角丸16px、白背景＋ソフトシャドウ）
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.child});
 
-  final String title;
   final Widget child;
 
   @override
@@ -97,34 +125,25 @@ class _SettingsCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.8),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusM),
         boxShadow: DesignTokens.softShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          child,
-          const SizedBox(height: 8),
-        ],
-      ),
+      clipBehavior: Clip.antiAlias,
+      child: child,
     );
   }
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, this.value, this.subtitle});
+  const _InfoRow({
+    required this.label,
+    this.icon,
+    this.value,
+    this.subtitle,
+  });
 
+  final IconData? icon;
   final String label;
   final String? value;
   final String? subtitle;
@@ -133,9 +152,13 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
+          if (icon != null) ...[
+            Icon(icon, size: 20, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +181,7 @@ class _InfoRow extends StatelessWidget {
             Text(
               value!,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
         ],
@@ -176,86 +199,183 @@ class _SlotManagement extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      children: [
-        // カプセル型チップ表示
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Wrap(
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // カプセル型チップ横並び
+          Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: slots.asMap().entries.map((entry) {
-              final slot = entry.value;
-              final theme = Theme.of(context);
-              return Chip(
-                label: Text(slot.name),
-                deleteIcon: Icon(Icons.close, size: 16, color: Colors.red.shade400),
-                onDeleted: slots.length > 1
-                    ? () => _showDeleteDialog(context, ref, slot)
-                    : null,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+            children: [
+              ...slots.map((slot) {
+                final accentColor = theme.colorScheme.primary;
+                return GestureDetector(
+                  onLongPress: () => _showSlotActions(context, ref, slot),
+                  onTap: () => _showRenameDialog(context, ref, slot),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: accentColor.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: accentColor,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          slot.name,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              // ＋チップ
+              GestureDetector(
+                onTap: () => _showAddDialog(context, ref),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add, size: 16, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                      const SizedBox(width: 4),
+                      Text(
+                        '追加',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                side: BorderSide(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                ),
-                backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 12),
-        // スロットリスト（並び替え可能）
-        ReorderableListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: slots.length,
-          onReorder: (oldIndex, newIndex) {
-            if (newIndex > oldIndex) newIndex--;
-            final reordered = List<Slot>.from(slots);
-            final item = reordered.removeAt(oldIndex);
-            reordered.insert(newIndex, item);
-            ref.read(slotProvider.notifier).reorderSlots(reordered);
-          },
-          itemBuilder: (context, index) {
-            final slot = slots[index];
-            return ListTile(
-              key: ValueKey(slot.id),
-              dense: true,
-              leading: Icon(Icons.drag_handle, size: 20,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
-              title: Text(slot.name),
-              subtitle: slot.startTime != null && slot.endTime != null
-                  ? Text('${slot.startTime} - ${slot.endTime}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                      ))
-                  : null,
-              trailing: IconButton(
-                icon: const Icon(Icons.edit_outlined, size: 18),
-                onPressed: () => _showRenameDialog(context, ref, slot),
               ),
-            );
-          },
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => _showAddDialog(context, ref),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('スロットを追加'),
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusM),
+            ],
+          ),
+          if (slots.length > 1) ...[
+            const SizedBox(height: 12),
+            Text(
+              '長押しで編集・削除 / ドラッグで並び替え',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+              ),
+            ),
+          ],
+          // 並び替えリスト
+          const SizedBox(height: 8),
+          ReorderableListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: slots.length,
+            onReorder: (oldIndex, newIndex) {
+              if (newIndex > oldIndex) newIndex--;
+              final reordered = List<Slot>.from(slots);
+              final item = reordered.removeAt(oldIndex);
+              reordered.insert(newIndex, item);
+              ref.read(slotProvider.notifier).reorderSlots(reordered);
+            },
+            itemBuilder: (context, index) {
+              final slot = slots[index];
+              return Container(
+                key: ValueKey(slot.id),
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.drag_handle,
+                      size: 18,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        slot.name,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
+                    if (slot.startTime != null && slot.endTime != null)
+                      Text(
+                        '${slot.startTime} - ${slot.endTime}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSlotActions(BuildContext context, WidgetRef ref, Slot slot) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusL)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-          ),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('名前を変更'),
+              onTap: () {
+                Navigator.pop(context);
+                _showRenameDialog(context, ref, slot);
+              },
+            ),
+            if (slots.length > 1)
+              ListTile(
+                leading: Icon(Icons.delete_outline, color: Colors.red.shade400),
+                title: Text('削除', style: TextStyle(color: Colors.red.shade400)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDeleteDialog(context, ref, slot);
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -366,24 +486,70 @@ class _NotificationSettings extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     return Column(
-      children: slots.map((slot) {
-        return ListTile(
-          dense: true,
-          title: Text(slot.name),
-          subtitle: slot.notifyEnabled && slot.notifyTime != null
-              ? Text('${slot.notifyTime} に通知',
-                  style: TextStyle(
-                    fontSize: 12,
+      children: [
+        for (int i = 0; i < slots.length; i++) ...[
+          if (i > 0)
+            Divider(
+              height: 1,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+              indent: 16,
+              endIndent: 16,
+            ),
+          _NotificationRow(slot: slots[i]),
+        ],
+      ],
+    );
+  }
+}
+
+class _NotificationRow extends ConsumerWidget {
+  const _NotificationRow({required this.slot});
+
+  final Slot slot;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isEnabled = slot.notifyEnabled;
+    final timeStr = slot.notifyTime ?? '09:00';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          // スロット名
+          Expanded(
+            child: Text(
+              slot.name,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          // 時刻表示（タップでピッカー）
+          if (isEnabled)
+            GestureDetector(
+              onTap: () => _showTimePicker(context, ref),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  timeStr,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
                     color: theme.colorScheme.primary,
-                  ))
-              : Text('OFF',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                  )),
-          trailing: Switch(
-            value: slot.notifyEnabled,
-            activeThumbColor: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(width: 8),
+          // トグル
+          Switch(
+            value: isEnabled,
+            activeTrackColor: theme.colorScheme.primary,
             onChanged: (enabled) async {
               if (enabled) {
                 final granted =
@@ -403,16 +569,12 @@ class _NotificationSettings extends ConsumerWidget {
                   );
             },
           ),
-          onTap: slot.notifyEnabled
-              ? () => _showTimePicker(context, ref, slot)
-              : null,
-        );
-      }).toList(),
+        ],
+      ),
     );
   }
 
-  void _showTimePicker(
-      BuildContext context, WidgetRef ref, Slot slot) async {
+  void _showTimePicker(BuildContext context, WidgetRef ref) async {
     final currentTime = slot.notifyTime ?? '09:00';
     final parts = currentTime.split(':');
     final initialTime = TimeOfDay(
@@ -437,7 +599,7 @@ class _NotificationSettings extends ConsumerWidget {
   }
 }
 
-// --- テーマ選択（プレビュー付きカード） ---
+// --- テーマ選択（ミニプレビュー付きカード） ---
 
 class _ThemeSelector extends ConsumerWidget {
   const _ThemeSelector();
@@ -447,30 +609,30 @@ class _ThemeSelector extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           _ThemeOption(
-            icon: Icons.light_mode,
             label: 'ライト',
             isSelected: themeMode == ThemeMode.light,
-            colors: [const Color(0xFFF8F9FA), const Color(0xFFEFF2F7)],
+            previewColors: [const Color(0xFFF8F9FA), const Color(0xFFEFF2F7)],
+            previewTextColor: const Color(0xFF333333),
             onTap: () => ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.light),
           ),
           const SizedBox(width: 12),
           _ThemeOption(
-            icon: Icons.dark_mode,
             label: 'ダーク',
             isSelected: themeMode == ThemeMode.dark,
-            colors: [const Color(0xFF1A1A2E), const Color(0xFF16213E)],
+            previewColors: [const Color(0xFF1A1A2E), const Color(0xFF16213E)],
+            previewTextColor: const Color(0xFFEEEEEE),
             onTap: () => ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.dark),
           ),
           const SizedBox(width: 12),
           _ThemeOption(
-            icon: Icons.settings_brightness,
             label: 'システム',
             isSelected: themeMode == ThemeMode.system,
-            colors: [const Color(0xFFF8F9FA), const Color(0xFF1A1A2E)],
+            previewColors: [const Color(0xFFF8F9FA), const Color(0xFF1A1A2E)],
+            previewTextColor: const Color(0xFF888888),
             onTap: () => ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.system),
           ),
         ],
@@ -481,17 +643,17 @@ class _ThemeSelector extends ConsumerWidget {
 
 class _ThemeOption extends StatelessWidget {
   const _ThemeOption({
-    required this.icon,
     required this.label,
     required this.isSelected,
-    required this.colors,
+    required this.previewColors,
+    required this.previewTextColor,
     required this.onTap,
   });
 
-  final IconData icon;
   final String label;
   final bool isSelected;
-  final List<Color> colors;
+  final List<Color> previewColors;
+  final Color previewTextColor;
   final VoidCallback onTap;
 
   @override
@@ -500,38 +662,95 @@ class _ThemeOption extends StatelessWidget {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.outline.withValues(alpha: 0.3),
-              width: isSelected ? 2 : 1,
-            ),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: colors,
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, size: 20,
-                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        child: Column(
+          children: [
+            // ミニプレビュー
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 60,
+              height: 80,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.outline.withValues(alpha: 0.2),
+                  width: isSelected ? 2.5 : 1,
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: previewColors,
                 ),
               ),
-            ],
-          ),
+              child: Stack(
+                children: [
+                  // ミニUIプレビュー要素
+                  Positioned(
+                    top: 12,
+                    left: 8,
+                    right: 8,
+                    child: Container(
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: previewTextColor.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 24,
+                    left: 8,
+                    right: 20,
+                    child: Container(
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: previewTextColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 12,
+                    left: 8,
+                    right: 8,
+                    child: Container(
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                  // チェックマーク
+                  if (isSelected)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: theme.colorScheme.primary,
+                        ),
+                        child: const Icon(Icons.check, size: 12, color: Colors.white),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -547,23 +766,38 @@ class _AdRemovalTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdRemoved = ref.watch(isAdRemovedProvider);
     final product = PurchaseService().product;
+    final theme = Theme.of(context);
 
     if (isAdRemoved) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 20),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.check_circle, color: Colors.green, size: 24),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('広告除去済み', style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    '広告除去済み',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green,
+                    ),
+                  ),
                   Text(
                     'すべての広告が非表示になっています',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -574,21 +808,42 @@ class _AdRemovalTile extends ConsumerWidget {
       );
     }
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
             children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary.withValues(alpha: 0.15),
+                      theme.colorScheme.tertiary.withValues(alpha: 0.15),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.workspace_premium, color: theme.colorScheme.primary, size: 24),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('広告を除去', style: Theme.of(context).textTheme.bodyMedium),
+                    Text(
+                      '広告を除去',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     Text(
                       product != null ? product.price : '読み込み中...',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
@@ -602,23 +857,27 @@ class _AdRemovalTile extends ConsumerWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
                 child: const Text('購入'),
               ),
             ],
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: SizedBox(
+          const SizedBox(height: 8),
+          SizedBox(
             width: double.infinity,
             child: TextButton(
               onPressed: () => ref.read(isAdRemovedProvider.notifier).restorePurchases(),
-              child: const Text('購入を復元'),
+              child: Text(
+                '購入を復元',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

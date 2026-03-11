@@ -166,20 +166,42 @@ class _BackgroundWavePainter extends CustomPainter {
 
     if (dataPoints.isEmpty) return;
 
+    // アンカーポイント: 月初と月末にもポイントを追加して全幅に波を広げる
+    final anchoredPoints = <_WavePoint>[];
+
+    // 月初アンカー
+    if (dataPoints.first.day > 1) {
+      anchoredPoints.add(_WavePoint(day: 1, average: dataPoints.first.average));
+    }
+
+    anchoredPoints.addAll(dataPoints);
+
+    // 月末アンカー
+    if (dataPoints.last.day < lastDay) {
+      anchoredPoints.add(_WavePoint(day: lastDay, average: dataPoints.last.average));
+    }
+
     // X座標: 日を画面幅にマッピング
     final points = <Offset>[];
+    final realDataIndices = <int>[]; // 実データのインデックス
     final gapSegments = <_GapSegment>[];
 
-    for (int i = 0; i < dataPoints.length; i++) {
-      final x = (dataPoints[i].day - 1) / (lastDay - 1).clamp(1, 999) * size.width;
+    for (int i = 0; i < anchoredPoints.length; i++) {
+      final x = (anchoredPoints[i].day - 1) / (lastDay - 1).clamp(1, 999) * size.width;
       final y = size.height -
-          ((dataPoints[i].average - 1) / 4) * size.height * 0.6 -
+          ((anchoredPoints[i].average - 1) / 4) * size.height * 0.6 -
           size.height * 0.2;
       points.add(Offset(x, y));
 
+      // 実データかどうかを記録
+      final isReal = dataPoints.any((dp) => dp.day == anchoredPoints[i].day);
+      if (isReal) {
+        realDataIndices.add(i);
+      }
+
       // 5日以上のギャップを検出
       if (i > 0) {
-        final gap = dataPoints[i].day - dataPoints[i - 1].day;
+        final gap = anchoredPoints[i].day - anchoredPoints[i - 1].day;
         if (gap >= 5) {
           gapSegments.add(_GapSegment(startIndex: i - 1, endIndex: i));
         }
@@ -187,7 +209,6 @@ class _BackgroundWavePainter extends CustomPainter {
     }
 
     if (points.length == 1) {
-      // 1点のみ: ドット
       final dotPaint = Paint()
         ..color = const Color(0xFF4A90D9).withValues(alpha: 0.3)
         ..style = PaintingStyle.fill;
@@ -213,17 +234,17 @@ class _BackgroundWavePainter extends CustomPainter {
       path.cubicTo(cp1x, cp1y, cp2x, cp2y, p2.dx, p2.dy);
     }
 
-    // 塗りつぶし用パス
+    // 塗りつぶし用パス（全幅）
     final fillPath = Path.from(path);
-    fillPath.lineTo(points.last.dx, size.height);
-    fillPath.lineTo(points.first.dx, size.height);
+    fillPath.lineTo(size.width, size.height);
+    fillPath.lineTo(0, size.height);
     fillPath.close();
 
-    // グラデーション塗りつぶし
-    final baseAlpha = brightness == Brightness.dark ? 0.12 : 0.08;
+    // グラデーション塗りつぶし（濃くして背景として認識しやすく）
+    final baseAlpha = brightness == Brightness.dark ? 0.18 : 0.15;
     final fillPaint = Paint()
       ..shader = ui.Gradient.linear(
-        Offset(0, 0),
+        const Offset(0, 0),
         Offset(0, size.height),
         [
           const Color(0xFF4A90D9).withValues(alpha: baseAlpha),
@@ -232,10 +253,10 @@ class _BackgroundWavePainter extends CustomPainter {
       );
     canvas.drawPath(fillPath, fillPaint);
 
-    // 線を描画
+    // 線を描画（太く、濃く）
     final linePaint = Paint()
-      ..color = const Color(0xFF4A90D9).withValues(alpha: 0.25)
-      ..strokeWidth = 2
+      ..color = const Color(0xFF4A90D9).withValues(alpha: 0.35)
+      ..strokeWidth = 3
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
     canvas.drawPath(path, linePaint);
@@ -253,6 +274,22 @@ class _BackgroundWavePainter extends CustomPainter {
             ? Colors.black.withValues(alpha: 0.3)
             : Colors.white.withValues(alpha: 0.5));
       canvas.drawRect(gapRect, gapPaint);
+    }
+
+    // 実データの位置にドット（枠付き）を打つ
+    final outerColor = brightness == Brightness.dark
+        ? Colors.white
+        : Colors.grey.shade300;
+    for (final idx in realDataIndices) {
+      final p = points[idx];
+      final outerPaint = Paint()
+        ..color = outerColor
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(p, 5, outerPaint);
+      final innerPaint = Paint()
+        ..color = const Color(0xFF4A90D9)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(p, 3.5, innerPaint);
     }
   }
 
