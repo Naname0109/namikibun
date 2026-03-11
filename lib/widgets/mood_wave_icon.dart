@@ -76,7 +76,7 @@ class _MoodWavePainter extends CustomPainter {
       final shadowPaint = Paint()
         ..color = color.withValues(alpha: 0.15)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-      _drawWaveBody(canvas, w, h, shadowPaint, dy: 2);
+      _drawDropletBody(canvas, w, h, shadowPaint, dy: 2);
     }
 
     // ボディグラデーション（上が明るく、下が暗い）
@@ -93,14 +93,17 @@ class _MoodWavePainter extends CustomPainter {
         stops: const [0.0, 0.5, 1.0],
       ).createShader(bodyRect)
       ..style = PaintingStyle.fill;
-    _drawWaveBody(canvas, w, h, bodyPaint);
+    _drawDropletBody(canvas, w, h, bodyPaint);
+
+    // 泡・しぶき（レベルに応じて量が変わる）
+    _drawFoam(canvas, w, h);
 
     // ボディハイライト（白い楕円）
     final highlightPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
     canvas.save();
-    canvas.translate(w * 0.3, h * 0.4);
+    canvas.translate(w * 0.3, h * 0.45);
     canvas.rotate(-0.3);
     canvas.drawOval(
       Rect.fromCenter(center: Offset.zero, width: w * 0.18, height: w * 0.3),
@@ -110,112 +113,105 @@ class _MoodWavePainter extends CustomPainter {
 
     // 顔を描画
     _drawFace(canvas, w, h);
-
-    // L5: しぶきエフェクト
-    if (level == 5) {
-      final splashPaint = Paint()
-        ..color = color.withValues(alpha: 0.5)
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset(w * 0.75, h * 0.08), w * 0.035, splashPaint);
-      canvas.drawCircle(Offset(w * 0.85, h * 0.15), w * 0.025, splashPaint);
-      canvas.drawCircle(Offset(w * 0.68, h * 0.04), w * 0.02, splashPaint);
-    }
   }
 
-  /// 波型ボディ: 上部が波のライン、右端でカール、下部はぷっくり丸い
-  void _drawWaveBody(Canvas canvas, double w, double h, Paint paint, {double dy = 0}) {
+  /// 雫型ボディ: 上部が尖り、下部がぷっくり丸い
+  void _drawDropletBody(Canvas canvas, double w, double h, Paint paint, {double dy = 0}) {
     final path = Path();
 
-    // レベルに応じた波の高さとカールの大きさ
-    final waveTopY = switch (level) {
-      5 => h * 0.08,   // 高く跳ね上がる
-      4 => h * 0.16,   // ゆるやかに高い
-      3 => h * 0.28,   // ほぼ平坦
-      2 => h * 0.35,   // 低い
-      _ => h * 0.42,   // しぼんだ
-    };
-
-    // カールの大きさ（L5が大きい、L1はほぼなし）
-    final curlSize = switch (level) {
-      5 => w * 0.15,
-      4 => w * 0.10,
-      3 => w * 0.06,
-      2 => w * 0.03,
-      _ => w * 0.01,
+    // レベルに応じた頂点の高さ
+    final tipY = switch (level) {
+      5 => h * 0.05,
+      4 => h * 0.12,
+      3 => h * 0.20,
+      2 => h * 0.28,
+      _ => h * 0.35,
     };
 
     final bottomY = h * 0.92 + dy;
-    final leftX = w * 0.12;
-    final rightX = w * 0.88;
+    final cx = w * 0.5;
+    final bodyWidth = w * 0.38;
 
-    // 開始点: 左下
-    path.moveTo(leftX, bottomY);
+    // 雫の頂点から開始
+    path.moveTo(cx, tipY + dy);
 
-    // 左側の丸い底面
+    // 右側カーブ（頂点→右ふくらみ→底）
     path.cubicTo(
-      leftX - w * 0.05, bottomY,
-      leftX - w * 0.08, h * 0.75 + dy,
-      leftX, h * 0.55 + dy,
+      cx + bodyWidth * 0.3, tipY + h * 0.15 + dy,
+      cx + bodyWidth, h * 0.45 + dy,
+      cx + bodyWidth, h * 0.65 + dy,
     );
 
-    // 左側から波頂上への上昇
+    // 右下の丸み
     path.cubicTo(
-      leftX + w * 0.05, h * 0.4 + dy,
-      leftX + w * 0.1, waveTopY + h * 0.05 + dy,
-      w * 0.35, waveTopY + dy,
+      cx + bodyWidth, h * 0.82 + dy,
+      cx + bodyWidth * 0.7, bottomY,
+      cx, bottomY,
     );
 
-    // 波頭の頂上（山なり）
+    // 左下の丸み
     path.cubicTo(
-      w * 0.45, waveTopY - h * 0.03 + dy,
-      w * 0.55, waveTopY - h * 0.03 + dy,
-      w * 0.65, waveTopY + dy,
+      cx - bodyWidth * 0.7, bottomY,
+      cx - bodyWidth, h * 0.82 + dy,
+      cx - bodyWidth, h * 0.65 + dy,
     );
 
-    // 波頭の下り＋カール
+    // 左側カーブ（底→左ふくらみ→頂点）
     path.cubicTo(
-      w * 0.72, waveTopY + h * 0.04 + dy,
-      w * 0.78, waveTopY + h * 0.08 + dy,
-      rightX - curlSize * 0.3, waveTopY + h * 0.06 + dy,
-    );
-
-    // カール部分（くるんと巻く）
-    if (level >= 3) {
-      path.cubicTo(
-        rightX + curlSize * 0.2, waveTopY - curlSize * 0.3 + dy,
-        rightX + curlSize * 0.5, waveTopY + curlSize * 0.8 + dy,
-        rightX, waveTopY + h * 0.15 + dy,
-      );
-    } else {
-      // L1-L2: カールなし、緩やかに下がる
-      path.cubicTo(
-        rightX, waveTopY + h * 0.08 + dy,
-        rightX + w * 0.02, waveTopY + h * 0.12 + dy,
-        rightX, waveTopY + h * 0.15 + dy,
-      );
-    }
-
-    // 右側の下り → 丸い底面
-    path.cubicTo(
-      rightX + w * 0.05, h * 0.55 + dy,
-      rightX + w * 0.08, h * 0.75 + dy,
-      rightX, bottomY,
-    );
-
-    // 底面を閉じる
-    path.cubicTo(
-      w * 0.7, bottomY + h * 0.03 + dy,
-      w * 0.3, bottomY + h * 0.03 + dy,
-      leftX, bottomY,
+      cx - bodyWidth, h * 0.45 + dy,
+      cx - bodyWidth * 0.3, tipY + h * 0.15 + dy,
+      cx, tipY + dy,
     );
 
     path.close();
     canvas.drawPath(path, paint);
   }
 
+  /// 白い泡・しぶき（レベルが高いほど多い）
+  void _drawFoam(Canvas canvas, double w, double h) {
+    if (level <= 1) return; // L1は泡なし
+
+    final foamPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.7)
+      ..style = PaintingStyle.fill;
+
+    final foamPaintLight = Paint()
+      ..color = Colors.white.withValues(alpha: 0.4)
+      ..style = PaintingStyle.fill;
+
+    final tipY = switch (level) {
+      5 => h * 0.05,
+      4 => h * 0.12,
+      3 => h * 0.20,
+      2 => h * 0.28,
+      _ => h * 0.35,
+    };
+
+    if (level >= 2) {
+      // 小さな泡1つ
+      canvas.drawCircle(Offset(w * 0.55, tipY + h * 0.02), w * 0.03, foamPaintLight);
+    }
+    if (level >= 3) {
+      // 泡2つ追加
+      canvas.drawCircle(Offset(w * 0.42, tipY - h * 0.01), w * 0.035, foamPaint);
+      canvas.drawCircle(Offset(w * 0.6, tipY + h * 0.05), w * 0.025, foamPaintLight);
+    }
+    if (level >= 4) {
+      // さらに追加
+      canvas.drawCircle(Offset(w * 0.35, tipY + h * 0.03), w * 0.03, foamPaint);
+      canvas.drawCircle(Offset(w * 0.65, tipY - h * 0.01), w * 0.028, foamPaintLight);
+    }
+    if (level == 5) {
+      // L5: たっぷり泡
+      canvas.drawCircle(Offset(w * 0.48, tipY - h * 0.04), w * 0.04, foamPaint);
+      canvas.drawCircle(Offset(w * 0.3, tipY + h * 0.06), w * 0.025, foamPaintLight);
+      canvas.drawCircle(Offset(w * 0.7, tipY + h * 0.02), w * 0.03, foamPaint);
+    }
+  }
+
   void _drawFace(Canvas canvas, double w, double h) {
-    // 顔の位置（ボディ中央やや下）
-    final faceY = h * 0.62;
+    // 顔の位置（雫型ボディの中央～やや下）
+    final faceY = h * 0.65;
     final faceCx = w * 0.5;
     final eyeSpacing = w * 0.13;
     final eyeSize = w * 0.055;
@@ -452,56 +448,47 @@ class _MoodWaveMiniPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
 
-    // レベルに応じた波の高さ
-    final waveTopY = switch (level) {
+    // 雫型シルエット（レベルに応じた頂点の高さ）
+    final tipY = switch (level) {
       5 => h * 0.05,
       4 => h * 0.15,
-      3 => h * 0.28,
-      2 => h * 0.38,
-      _ => h * 0.45,
-    };
-
-    final curlSize = switch (level) {
-      5 => w * 0.12,
-      4 => w * 0.08,
-      3 => w * 0.04,
-      _ => w * 0.02,
+      3 => h * 0.25,
+      2 => h * 0.35,
+      _ => h * 0.42,
     };
 
     final bottomY = h * 0.95;
-    final leftX = w * 0.1;
-    final rightX = w * 0.9;
+    final cx = w * 0.5;
+    final bodyWidth = w * 0.4;
 
     final path = Path();
-    path.moveTo(leftX, bottomY);
+    path.moveTo(cx, tipY);
 
-    // 左側
-    path.cubicTo(leftX - w * 0.05, bottomY, leftX - w * 0.05, h * 0.6, leftX, h * 0.45);
+    // 右カーブ
+    path.cubicTo(
+      cx + bodyWidth * 0.3, tipY + h * 0.15,
+      cx + bodyWidth, h * 0.45,
+      cx + bodyWidth, h * 0.65,
+    );
+    path.cubicTo(
+      cx + bodyWidth, h * 0.82,
+      cx + bodyWidth * 0.7, bottomY,
+      cx, bottomY,
+    );
 
-    // 波の上昇
-    path.cubicTo(leftX + w * 0.1, h * 0.3, w * 0.25, waveTopY + h * 0.05, w * 0.4, waveTopY);
+    // 左カーブ
+    path.cubicTo(
+      cx - bodyWidth * 0.7, bottomY,
+      cx - bodyWidth, h * 0.82,
+      cx - bodyWidth, h * 0.65,
+    );
+    path.cubicTo(
+      cx - bodyWidth, h * 0.45,
+      cx - bodyWidth * 0.3, tipY + h * 0.15,
+      cx, tipY,
+    );
 
-    // 波頂上
-    path.cubicTo(w * 0.5, waveTopY - h * 0.02, w * 0.6, waveTopY, w * 0.7, waveTopY + h * 0.05);
-
-    // カール
-    if (level >= 3) {
-      path.cubicTo(
-        w * 0.8, waveTopY + h * 0.08,
-        rightX + curlSize * 0.3, waveTopY - curlSize * 0.2,
-        rightX, waveTopY + h * 0.15,
-      );
-    } else {
-      path.cubicTo(w * 0.8, waveTopY + h * 0.08, rightX, waveTopY + h * 0.1, rightX, waveTopY + h * 0.15);
-    }
-
-    // 右側
-    path.cubicTo(rightX + w * 0.05, h * 0.6, rightX + w * 0.05, bottomY, rightX, bottomY);
-
-    // 底面
-    path.lineTo(leftX, bottomY);
     path.close();
-
     canvas.drawPath(path, paint);
   }
 

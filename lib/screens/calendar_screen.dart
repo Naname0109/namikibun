@@ -216,7 +216,7 @@ class _BackgroundWavePainter extends CustomPainter {
       return;
     }
 
-    // Catmull-Romスプラインでパスを構築
+    // Catmull-Romスプラインでパスを構築（テンション調整でなめらかに）
     final path = Path();
     path.moveTo(points[0].dx, points[0].dy);
 
@@ -226,10 +226,11 @@ class _BackgroundWavePainter extends CustomPainter {
       final p2 = points[i + 1];
       final p3 = i + 2 < points.length ? points[i + 2] : points[i + 1];
 
-      final cp1x = p1.dx + (p2.dx - p0.dx) / 6;
-      final cp1y = p1.dy + (p2.dy - p0.dy) / 6;
-      final cp2x = p2.dx - (p3.dx - p1.dx) / 6;
-      final cp2y = p2.dy - (p3.dy - p1.dy) / 6;
+      // テンション 1/4 でよりなめらかに（デフォルト 1/6）
+      final cp1x = p1.dx + (p2.dx - p0.dx) / 4;
+      final cp1y = p1.dy + (p2.dy - p0.dy) / 4;
+      final cp2x = p2.dx - (p3.dx - p1.dx) / 4;
+      final cp2y = p2.dy - (p3.dy - p1.dy) / 4;
 
       path.cubicTo(cp1x, cp1y, cp2x, cp2y, p2.dx, p2.dy);
     }
@@ -240,22 +241,31 @@ class _BackgroundWavePainter extends CustomPainter {
     fillPath.lineTo(0, size.height);
     fillPath.close();
 
-    // グラデーション塗りつぶし（濃くして背景として認識しやすく）
+    // 気分色グラデーション（上=ミントグリーン(高気分)、下=コーラル(低気分)）
     final baseAlpha = brightness == Brightness.dark ? 0.18 : 0.15;
     final fillPaint = Paint()
       ..shader = ui.Gradient.linear(
         const Offset(0, 0),
         Offset(0, size.height),
         [
-          const Color(0xFF4A90D9).withValues(alpha: baseAlpha),
-          const Color(0xFF4ECDC4).withValues(alpha: baseAlpha * 0.3),
+          const Color(0xFF4ECDC4).withValues(alpha: baseAlpha),       // ミントグリーン（上=高気分）
+          const Color(0xFFFFD93D).withValues(alpha: baseAlpha * 0.5), // イエロー（中間）
+          const Color(0xFFE76F51).withValues(alpha: baseAlpha * 0.3), // コーラル（下=低気分）
         ],
+        [0.0, 0.5, 1.0],
       );
     canvas.drawPath(fillPath, fillPaint);
 
-    // 線を描画（太く、濃く）
+    // 線を描画（気分色グラデーション）
     final linePaint = Paint()
-      ..color = const Color(0xFF4A90D9).withValues(alpha: 0.35)
+      ..shader = ui.Gradient.linear(
+        const Offset(0, 0),
+        Offset(0, size.height),
+        [
+          const Color(0xFF4ECDC4).withValues(alpha: 0.45),
+          const Color(0xFFE76F51).withValues(alpha: 0.35),
+        ],
+      )
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -276,20 +286,23 @@ class _BackgroundWavePainter extends CustomPainter {
       canvas.drawRect(gapRect, gapPaint);
     }
 
-    // 実データの位置にドット（枠付き）を打つ
+    // 実データの位置にドット（気分色、枠付き）を打つ
     final outerColor = brightness == Brightness.dark
         ? Colors.white
         : Colors.grey.shade300;
     for (final idx in realDataIndices) {
       final p = points[idx];
+      final avg = anchoredPoints[idx].average;
+      final moodLevel = avg.round().clamp(1, 5);
+      final dotColor = AppConstants.moodColors[moodLevel]!;
       final outerPaint = Paint()
         ..color = outerColor
         ..style = PaintingStyle.fill;
-      canvas.drawCircle(p, 5, outerPaint);
+      canvas.drawCircle(p, 4, outerPaint);
       final innerPaint = Paint()
-        ..color = const Color(0xFF4A90D9)
+        ..color = dotColor
         ..style = PaintingStyle.fill;
-      canvas.drawCircle(p, 3.5, innerPaint);
+      canvas.drawCircle(p, 2.5, innerPaint);
     }
   }
 

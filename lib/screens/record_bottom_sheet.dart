@@ -1,6 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/constants/design_tokens.dart';
@@ -54,6 +59,8 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
   int? _selectedMoodLevel;
   late TextEditingController _memoController;
   final Set<String> _selectedTags = {};
+  String? _photoPath;
+  bool _isNewPhoto = false;
   bool _isSaving = false;
   final _saveButtonKey = GlobalKey();
 
@@ -69,6 +76,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
       _selectedMoodLevel = record.moodLevel;
       _memoController.text = record.memo ?? '';
       _selectedTags.addAll(record.tags);
+      _photoPath = record.photoPath;
     }
   }
 
@@ -76,6 +84,35 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
   void dispose() {
     _memoController.dispose();
     super.dispose();
+  }
+
+  Future<String?> _copyPhotoToAppDir(String sourcePath) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final photosDir = Directory(p.join(appDir.path, 'photos'));
+    if (!await photosDir.exists()) {
+      await photosDir.create(recursive: true);
+    }
+    final ext = p.extension(sourcePath);
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
+    final destPath = p.join(photosDir.path, fileName);
+    await File(sourcePath).copy(destPath);
+    return destPath;
+  }
+
+  Future<void> _pickPhoto() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 80,
+    );
+    if (image != null) {
+      setState(() {
+        _photoPath = image.path;
+        _isNewPhoto = true;
+      });
+    }
   }
 
   Future<void> _save() async {
@@ -87,12 +124,19 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
       final now = DateTime.now().toIso8601String();
       final notifier = ref.read(moodRecordsProvider.notifier);
 
+      // 新しい写真が選ばれていればアプリディレクトリにコピー
+      String? savedPhotoPath = _photoPath;
+      if (_photoPath != null && _isNewPhoto) {
+        savedPhotoPath = await _copyPhotoToAppDir(_photoPath!);
+      }
+
       if (isEditing) {
         await notifier.updateRecord(
           widget.existingRecord!.copyWith(
             moodLevel: _selectedMoodLevel!,
             memo: _memoController.text.isEmpty ? null : _memoController.text,
             tags: _selectedTags.toList(),
+            photoPath: savedPhotoPath,
             updatedAt: now,
           ),
         );
@@ -104,6 +148,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
             moodLevel: _selectedMoodLevel!,
             memo: _memoController.text.isEmpty ? null : _memoController.text,
             tags: _selectedTags.toList(),
+            photoPath: savedPhotoPath,
             createdAt: now,
             updatedAt: now,
           ),
@@ -189,12 +234,14 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
             runSpacing: 8,
             children: AppConstants.defaultTags.map((tag) {
               final isSelected = _selectedTags.contains(tag);
+              final tagColor = AppConstants.tagColors[tag];
               return FilterChip(
                 label: Text(tag),
                 selected: isSelected,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
+                selectedColor: tagColor?.withValues(alpha: 0.2),
                 onSelected: (selected) {
                   setState(() {
                     if (selected) {
@@ -206,6 +253,75 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
                 },
               );
             }).toList(),
+          ),
+          const SizedBox(height: 16),
+
+          // 写真
+          Text('写真', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: _pickPhoto,
+            child: _photoPath != null
+                ? Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          File(_photoPath!),
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: GestureDetector(
+                          onTap: () => setState(() => _photoPath = null),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Container(
+                    height: 60,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_outlined,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '写真を追加',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
           ),
           const SizedBox(height: 24),
 

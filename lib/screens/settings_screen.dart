@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +9,7 @@ import 'package:namikibun/models/slot.dart';
 import 'package:namikibun/providers/purchase_provider.dart';
 import 'package:namikibun/providers/slot_provider.dart';
 import 'package:namikibun/providers/theme_provider.dart';
+import 'package:namikibun/screens/passcode_screen.dart';
 import 'package:namikibun/services/notification_service.dart';
 import 'package:namikibun/services/purchase_service.dart';
 
@@ -60,6 +64,13 @@ class SettingsScreen extends ConsumerWidget {
           _sectionTitle(context, 'テーマ'),
           _SectionCard(
             child: const _ThemeSelector(),
+          ),
+          const SizedBox(height: 20),
+
+          // セキュリティ
+          _sectionTitle(context, 'セキュリティ'),
+          _SectionCard(
+            child: const _PasscodeSetting(),
           ),
           const SizedBox(height: 20),
 
@@ -875,6 +886,131 @@ class _AdRemovalTile extends ConsumerWidget {
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// --- パスコード設定 ---
+
+class _PasscodeSetting extends ConsumerStatefulWidget {
+  const _PasscodeSetting();
+
+  @override
+  ConsumerState<_PasscodeSetting> createState() => _PasscodeSettingState();
+}
+
+class _PasscodeSettingState extends ConsumerState<_PasscodeSetting> {
+  late bool _isEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    final prefs = ref.read(sharedPreferencesProvider);
+    _isEnabled = prefs.getBool('passcode_enabled') ?? false;
+  }
+
+  Future<bool> _confirmPasscodeDisable(BuildContext context, WidgetRef ref) async {
+    final controller = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('パスコードを解除'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('現在のパスコードを入力してください'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              obscureText: true,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'パスコード',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final prefs = ref.read(sharedPreferencesProvider);
+              final savedHash = prefs.getString('passcode_hash');
+              final inputHash = sha256.convert(utf8.encode(controller.text)).toString();
+              if (inputHash == savedHash) {
+                await prefs.setBool('passcode_enabled', false);
+                await prefs.remove('passcode_hash');
+                if (context.mounted) Navigator.pop(context, true);
+              } else {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('パスコードが違います')),
+                  );
+                }
+              }
+            },
+            child: const Text('解除'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Icon(
+            Icons.lock_outline,
+            size: 20,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('パスコードロック', style: theme.textTheme.bodyMedium),
+                Text(
+                  'アプリ起動時にロックを要求',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _isEnabled,
+            activeTrackColor: theme.colorScheme.primary,
+            onChanged: (enabled) async {
+              if (enabled) {
+                final success = await showPasscodeSetupDialog(context);
+                if (success) {
+                  setState(() => _isEnabled = true);
+                }
+              } else {
+                // パスコード確認ダイアログ
+                final confirmed = await _confirmPasscodeDisable(context, ref);
+                if (confirmed) {
+                  setState(() => _isEnabled = false);
+                }
+              }
+            },
           ),
         ],
       ),

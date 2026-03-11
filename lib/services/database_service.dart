@@ -26,7 +26,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -41,6 +41,7 @@ class DatabaseService {
         mood_level INTEGER NOT NULL,
         memo TEXT,
         tags TEXT NOT NULL DEFAULT '[]',
+        photo_path TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         UNIQUE(date, slot_id)
@@ -84,10 +85,9 @@ class DatabaseService {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // 将来のマイグレーション用
-    // if (oldVersion < 2) {
-    //   await db.execute('ALTER TABLE ... ADD COLUMN ...');
-    // }
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE mood_records ADD COLUMN photo_path TEXT');
+    }
   }
 
   // --- MoodRecord CRUD ---
@@ -262,6 +262,7 @@ class DatabaseService {
       'mood_level': record.moodLevel,
       'memo': record.memo,
       'tags': jsonEncode(record.tags),
+      'photo_path': record.photoPath,
       'created_at': record.createdAt,
       'updated_at': record.updatedAt,
     };
@@ -277,6 +278,7 @@ class DatabaseService {
       tags: (jsonDecode(map['tags'] as String) as List<dynamic>)
           .map((e) => e as String)
           .toList(),
+      photoPath: map['photo_path'] as String?,
       createdAt: map['created_at'] as String,
       updatedAt: map['updated_at'] as String,
     );

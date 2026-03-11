@@ -111,16 +111,30 @@ class _StatsMonthHeader extends StatelessWidget {
   }
 }
 
-class _StatsContent extends StatelessWidget {
+class _StatsContent extends ConsumerWidget {
   const _StatsContent({required this.stats});
 
   final MonthlyStats stats;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final weeklyAsync = ref.watch(weeklyStatsProvider);
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
+        // 週間サマリー
+        weeklyAsync.when(
+          data: (weekly) => weekly.thisWeekRecordCount > 0
+              ? Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: _WeeklySummaryCard(weekly: weekly),
+                )
+              : const SizedBox.shrink(),
+          loading: () => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
+        ),
+
         // 時間帯別平均気分（棒グラフ）
         _SectionTitle(title: '時間帯別の平均気分'),
         const SizedBox(height: 8),
@@ -132,6 +146,14 @@ class _StatsContent extends StatelessWidget {
         const SizedBox(height: 8),
         _DailyTrendLineChart(dailyAverages: stats.dailyAverages),
         const SizedBox(height: 24),
+
+        // タグ分析
+        if (stats.tagCounts.isNotEmpty) ...[
+          _SectionTitle(title: 'タグ分析'),
+          const SizedBox(height: 8),
+          _TagAnalyticsSection(stats: stats),
+          const SizedBox(height: 24),
+        ],
 
         // 今月のハイライト
         _SectionTitle(title: '今月のハイライト'),
@@ -197,8 +219,10 @@ class _SlotAverageBarChart extends StatelessWidget {
                 interval: 1,
                 getTitlesWidget: (value, _) {
                   final level = value.toInt();
-                  if (level < 1 || level > 5) return const SizedBox.shrink();
-                  return MoodWaveIconMini(level: level, size: 12);
+                  if (level == 5 || level == 1) {
+                    return MoodWaveIconMini(level: level, size: 14);
+                  }
+                  return const SizedBox.shrink();
                 },
               ),
             ),
@@ -288,8 +312,10 @@ class _DailyTrendLineChart extends StatelessWidget {
                 interval: 1,
                 getTitlesWidget: (value, _) {
                   final level = value.toInt();
-                  if (level < 1 || level > 5) return const SizedBox.shrink();
-                  return MoodWaveIconMini(level: level, size: 12);
+                  if (level == 5 || level == 1) {
+                    return MoodWaveIconMini(level: level, size: 14);
+                  }
+                  return const SizedBox.shrink();
                 },
               ),
             ),
@@ -446,6 +472,187 @@ class _HighlightCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// 週間サマリーカード
+class _WeeklySummaryCard extends StatelessWidget {
+  const _WeeklySummaryCard({required this.weekly});
+
+  final WeeklyStats weekly;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final avgLevel = weekly.thisWeekAverage.round().clamp(1, 5);
+    final color = AppConstants.moodColors[avgLevel]!;
+    final change = weekly.weekOverWeekChange;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.12),
+            color.withValues(alpha: 0.04),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusM),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '今週のサマリー',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              MoodWaveIcon(level: avgLevel, size: 40),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '平均 ${weekly.thisWeekAverage.toStringAsFixed(1)}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                  Text(
+                    '${weekly.thisWeekRecordCount}件の記録',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              if (change != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: change >= 0
+                        ? Colors.green.withValues(alpha: 0.1)
+                        : Colors.red.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        change >= 0 ? Icons.trending_up : Icons.trending_down,
+                        size: 16,
+                        color: change >= 0 ? Colors.green : Colors.red,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: change >= 0 ? Colors.green : Colors.red,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// タグ分析セクション
+class _TagAnalyticsSection extends StatelessWidget {
+  const _TagAnalyticsSection({required this.stats});
+
+  final MonthlyStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    // 使用回数でソート
+    final sortedTags = stats.tagCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final maxCount = sortedTags.isNotEmpty ? sortedTags.first.value : 1;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusM),
+        boxShadow: DesignTokens.softShadow,
+      ),
+      child: Column(
+        children: sortedTags.map((entry) {
+          final tag = entry.key;
+          final count = entry.value;
+          final avg = stats.tagAverages[tag] ?? 3.0;
+          final avgLevel = avg.round().clamp(1, 5);
+          final tagColor = AppConstants.tagColors[tag] ?? theme.colorScheme.outline;
+          final ratio = count / maxCount;
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                // タグ名
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    tag,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: tagColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 横棒グラフ
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: ratio,
+                      minHeight: 14,
+                      backgroundColor: tagColor.withValues(alpha: 0.08),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        tagColor.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 回数
+                SizedBox(
+                  width: 28,
+                  child: Text(
+                    '$count回',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
+                // 平均気分アイコン
+                MoodWaveIconMini(level: avgLevel, size: 14),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }

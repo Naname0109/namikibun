@@ -10,7 +10,18 @@
       "Bash(cd C:/Users/tubak/Documents/AppFactory/namikibun && flutter analyze 2>&1 && flutter test 2>&1)",
       "Bash(mkdir -p C:/Users/tubak/Documents/AppFactory/namikibun/assets && cp \"C:/Users/tubak/Downloads/icon_design_a.png\" \"C:/Users/tubak/Documents/AppFactory/namikibun/assets/app_icon.png\")",
       "Bash(cd C:/Users/tubak/Documents/AppFactory/namikibun && flutter pub get)",
-      "Bash(cd C:/Users/tubak/Documents/AppFactory/namikibun && dart run flutter_launcher_icons)"
+      "Bash(cd C:/Users/tubak/Documents/AppFactory/namikibun && dart run flutter_launcher_icons)",
+      "Bash(cd C:/Users/tubak/Documents/AppFactory/namikibun && flutter emulators --launch Pixel_8_API_35)",
+      "Bash(flutter emulators:*)",
+      "Bash(cd C:/Users/tubak/Documents/AppFactory/namikibun && flutter run)",
+      "Bash(cd \"C:\\\\Users\\\\tubak\\\\Documents\\\\AppFactory\\\\namikibun\" && flutter analyze 2>&1 | head -50)",
+      "Bash(cd \"C:\\\\Users\\\\tubak\\\\Documents\\\\AppFactory\\\\namikibun\" && flutter analyze 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\tubak\\\\Documents\\\\AppFactory\\\\namikibun\" && flutter run)",
+      "Bash(flutter pub:*)",
+      "Bash(dart run:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter test:*)",
+      "Bash(git add:*)"
     ]
   }
 }

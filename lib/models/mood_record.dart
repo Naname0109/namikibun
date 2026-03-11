@@ -12,6 +12,7 @@ class MoodRecord with _$MoodRecord {
     required int moodLevel,
     String? memo,
     @Default([]) List<String> tags,
+    String? photoPath,
     required String createdAt,
     required String updatedAt,
   }) = _MoodRecord;

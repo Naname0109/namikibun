@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:namikibun/models/mood_record.dart';
@@ -38,6 +40,16 @@ class MoodRecordsNotifier extends AsyncNotifier<List<MoodRecord>> {
   }
 
   Future<void> deleteRecord(int id) async {
+    // 写真ファイルも削除
+    final records = state.valueOrNull ?? [];
+    final record = records.where((r) => r.id == id).firstOrNull;
+    if (record?.photoPath != null) {
+      final file = File(record!.photoPath!);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    }
+
     await DatabaseService().deleteMoodRecord(id);
     ref.invalidateSelf();
     ref.invalidate(calendarRecordsProvider);

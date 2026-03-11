@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:namikibun/app.dart';
 import 'package:namikibun/providers/theme_provider.dart';
+import 'package:namikibun/screens/passcode_screen.dart';
 import 'package:namikibun/screens/splash_screen.dart';
 import 'package:namikibun/services/ad_service.dart';
 import 'package:namikibun/services/purchase_service.dart';
@@ -35,27 +36,50 @@ class _AppWithSplash extends ConsumerStatefulWidget {
   ConsumerState<_AppWithSplash> createState() => _AppWithSplashState();
 }
 
+enum _AppState { splash, passcode, main }
+
 class _AppWithSplashState extends ConsumerState<_AppWithSplash> {
-  bool _showSplash = true;
+  _AppState _state = _AppState.splash;
+
+  void _onSplashComplete() {
+    if (!mounted) return;
+    final prefs = ref.read(sharedPreferencesProvider);
+    final passcodeEnabled = prefs.getBool('passcode_enabled') ?? false;
+
+    if (passcodeEnabled) {
+      setState(() => _state = _AppState.passcode);
+    } else {
+      setState(() => _state = _AppState.main);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
 
-    if (_showSplash) {
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: themeMode,
-        home: SplashScreen(
-          onComplete: () {
-            if (mounted) setState(() => _showSplash = false);
-          },
-        ),
-      );
+    switch (_state) {
+      case _AppState.splash:
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
+          home: SplashScreen(onComplete: _onSplashComplete),
+        );
+      case _AppState.passcode:
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
+          home: PasscodeScreen(
+            onUnlocked: () {
+              if (mounted) setState(() => _state = _AppState.main);
+            },
+          ),
+        );
+      case _AppState.main:
+        return const NamikibunApp();
     }
-
-    return const NamikibunApp();
   }
 }

@@ -18,6 +18,8 @@ class MonthlyStats {
   final MoodRecord? bestRecord; // 最高気分のレコード
   final MoodRecord? worstRecord; // 最低気分のレコード
   final int totalRecordDays; // 記録日数
+  final Map<String, int> tagCounts; // tag -> 使用回数
+  final Map<String, double> tagAverages; // tag -> 平均気分
 
   const MonthlyStats({
     required this.slotAverages,
@@ -26,7 +28,30 @@ class MonthlyStats {
     this.bestRecord,
     this.worstRecord,
     required this.totalRecordDays,
+    this.tagCounts = const {},
+    this.tagAverages = const {},
   });
+}
+
+/// 週間統計データモデル
+class WeeklyStats {
+  final double thisWeekAverage;
+  final double? lastWeekAverage;
+  final int thisWeekRecordCount;
+  final Map<String, double> dailyAverages; // date -> 平均気分
+
+  const WeeklyStats({
+    required this.thisWeekAverage,
+    this.lastWeekAverage,
+    required this.thisWeekRecordCount,
+    required this.dailyAverages,
+  });
+
+  /// 先週比の変化（正=改善、負=悪化）
+  double? get weekOverWeekChange {
+    if (lastWeekAverage == null) return null;
+    return thisWeekAverage - lastWeekAverage!;
+  }
 }
 
 /// 月間統計Provider
@@ -86,6 +111,22 @@ final monthlyStatsProvider = FutureProvider<MonthlyStats>((ref) async {
     }
   }
 
+  // タグ分析
+  final tagCounts = <String, int>{};
+  final tagMoodSums = <String, int>{};
+  final tagMoodCounts = <String, int>{};
+  for (final record in records) {
+    for (final tag in record.tags) {
+      tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+      tagMoodSums[tag] = (tagMoodSums[tag] ?? 0) + record.moodLevel;
+      tagMoodCounts[tag] = (tagMoodCounts[tag] ?? 0) + 1;
+    }
+  }
+  final tagAverages = <String, double>{};
+  for (final tag in tagMoodSums.keys) {
+    tagAverages[tag] = tagMoodSums[tag]! / tagMoodCounts[tag]!;
+  }
+
   return MonthlyStats(
     slotAverages: slotAverages,
     slotNames: slotNames,
@@ -93,5 +134,65 @@ final monthlyStatsProvider = FutureProvider<MonthlyStats>((ref) async {
     bestRecord: best,
     worstRecord: worst,
     totalRecordDays: dailyCounts.length,
+    tagCounts: tagCounts,
+    tagAverages: tagAverages,
+  );
+});
+
+/// 週間統計Provider
+final weeklyStatsProvider = FutureProvider<WeeklyStats>((ref) async {
+  final today = AppDateUtils.getLogicalToday();
+
+  // 今週の月曜日を計算
+  final weekday = today.weekday; // 1=月, 7=日
+  final thisWeekStart = today.subtract(Duration(days: weekday - 1));
+  final lastWeekStart = thisWeekStart.subtract(const Duration(days: 7));
+  final lastWeekEnd = thisWeekStart.subtract(const Duration(days: 1));
+
+  final db = DatabaseService();
+
+  // 今週のレコード
+  final thisWeekRecords = await db.getMoodRecordsByDateRange(
+    AppDateUtils.formatDate(thisWeekStart),
+    AppDateUtils.formatDate(today),
+  );
+
+  // 先週のレコード
+  final lastWeekRecords = await db.getMoodRecordsByDateRange(
+    AppDateUtils.formatDate(lastWeekStart),
+    AppDateUtils.formatDate(lastWeekEnd),
+  );
+
+  // 今週の平均
+  double thisWeekAvg = 0;
+  if (thisWeekRecords.isNotEmpty) {
+    thisWeekAvg = thisWeekRecords.map((r) => r.moodLevel).reduce((a, b) => a + b) /
+        thisWeekRecords.length;
+  }
+
+  // 先週の平均
+  double? lastWeekAvg;
+  if (lastWeekRecords.isNotEmpty) {
+    lastWeekAvg = lastWeekRecords.map((r) => r.moodLevel).reduce((a, b) => a + b) /
+        lastWeekRecords.length;
+  }
+
+  // 今週の日別平均
+  final dailySums = <String, int>{};
+  final dailyCounts = <String, int>{};
+  for (final record in thisWeekRecords) {
+    dailySums[record.date] = (dailySums[record.date] ?? 0) + record.moodLevel;
+    dailyCounts[record.date] = (dailyCounts[record.date] ?? 0) + 1;
+  }
+  final dailyAverages = <String, double>{};
+  for (final date in dailySums.keys) {
+    dailyAverages[date] = dailySums[date]! / dailyCounts[date]!;
+  }
+
+  return WeeklyStats(
+    thisWeekAverage: thisWeekAvg,
+    lastWeekAverage: lastWeekAvg,
+    thisWeekRecordCount: thisWeekRecords.length,
+    dailyAverages: dailyAverages,
   );
 });

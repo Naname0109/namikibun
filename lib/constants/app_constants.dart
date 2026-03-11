@@ -42,6 +42,16 @@ class AppConstants {
     'その他',
   ];
 
+  // タグに対応する色
+  static const Map<String, Color> tagColors = {
+    '仕事': Color(0xFF4A90D9),     // 青
+    '運動': Color(0xFF4ECDC4),     // 緑
+    '食事': Color(0xFFFF8C42),     // オレンジ
+    '人間関係': Color(0xFFE88EBF), // ピンク
+    '天気': Color(0xFF7EC8E3),     // 水色
+    'その他': Color(0xFF9E9E9E),   // グレー
+  };
+
   // デフォルトスロット
   static const List<Map<String, dynamic>> defaultSlots = [
     {

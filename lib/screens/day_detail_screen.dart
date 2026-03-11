@@ -398,20 +398,50 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    hasRecord
-                        ? (widget.record!.memo?.isNotEmpty == true
-                            ? widget.record!.memo!
-                            : AppConstants.moodLabels[moodLevel]!)
-                        : 'タップして記録',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: hasRecord ? 0.6 : 0.4,
+                  if (hasRecord && widget.record!.tags.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Row(
+                        children: widget.record!.tags.take(3).map((tag) {
+                          final tagColor = AppConstants.tagColors[tag] ??
+                              theme.colorScheme.outline;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: tagColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                tag,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: tagColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
+                    )
+                  else
+                    Text(
+                      hasRecord
+                          ? (widget.record!.memo?.isNotEmpty == true
+                              ? widget.record!.memo!
+                              : AppConstants.moodLabels[moodLevel]!)
+                          : 'タップして記録',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: hasRecord ? 0.6 : 0.4,
+                        ),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ],
               ),
             ),

@@ -27,6 +27,7 @@ mixin _$MoodRecord {
   int get moodLevel => throw _privateConstructorUsedError;
   String? get memo => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
+  String? get photoPath => throw _privateConstructorUsedError;
   String get createdAt => throw _privateConstructorUsedError;
   String get updatedAt => throw _privateConstructorUsedError;
 
@@ -54,6 +55,7 @@ abstract class $MoodRecordCopyWith<$Res> {
     int moodLevel,
     String? memo,
     List<String> tags,
+    String? photoPath,
     String createdAt,
     String updatedAt,
   });
@@ -80,6 +82,7 @@ class _$MoodRecordCopyWithImpl<$Res, $Val extends MoodRecord>
     Object? moodLevel = null,
     Object? memo = freezed,
     Object? tags = null,
+    Object? photoPath = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
   }) {
@@ -109,6 +112,10 @@ class _$MoodRecordCopyWithImpl<$Res, $Val extends MoodRecord>
                 ? _value.tags
                 : tags // ignore: cast_nullable_to_non_nullable
                       as List<String>,
+            photoPath: freezed == photoPath
+                ? _value.photoPath
+                : photoPath // ignore: cast_nullable_to_non_nullable
+                      as String?,
             createdAt: null == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -139,6 +146,7 @@ abstract class _$$MoodRecordImplCopyWith<$Res>
     int moodLevel,
     String? memo,
     List<String> tags,
+    String? photoPath,
     String createdAt,
     String updatedAt,
   });
@@ -164,6 +172,7 @@ class __$$MoodRecordImplCopyWithImpl<$Res>
     Object? moodLevel = null,
     Object? memo = freezed,
     Object? tags = null,
+    Object? photoPath = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
   }) {
@@ -193,6 +202,10 @@ class __$$MoodRecordImplCopyWithImpl<$Res>
             ? _value._tags
             : tags // ignore: cast_nullable_to_non_nullable
                   as List<String>,
+        photoPath: freezed == photoPath
+            ? _value.photoPath
+            : photoPath // ignore: cast_nullable_to_non_nullable
+                  as String?,
         createdAt: null == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -216,6 +229,7 @@ class _$MoodRecordImpl implements _MoodRecord {
     required this.moodLevel,
     this.memo,
     final List<String> tags = const [],
+    this.photoPath,
     required this.createdAt,
     required this.updatedAt,
   }) : _tags = tags;
@@ -243,13 +257,15 @@ class _$MoodRecordImpl implements _MoodRecord {
   }
 
   @override
+  final String? photoPath;
+  @override
   final String createdAt;
   @override
   final String updatedAt;
 
   @override
   String toString() {
-    return 'MoodRecord(id: $id, date: $date, slotId: $slotId, moodLevel: $moodLevel, memo: $memo, tags: $tags, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'MoodRecord(id: $id, date: $date, slotId: $slotId, moodLevel: $moodLevel, memo: $memo, tags: $tags, photoPath: $photoPath, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -264,6 +280,8 @@ class _$MoodRecordImpl implements _MoodRecord {
                 other.moodLevel == moodLevel) &&
             (identical(other.memo, memo) || other.memo == memo) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
+            (identical(other.photoPath, photoPath) ||
+                other.photoPath == photoPath) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -280,6 +298,7 @@ class _$MoodRecordImpl implements _MoodRecord {
     moodLevel,
     memo,
     const DeepCollectionEquality().hash(_tags),
+    photoPath,
     createdAt,
     updatedAt,
   );
@@ -306,6 +325,7 @@ abstract class _MoodRecord implements MoodRecord {
     required final int moodLevel,
     final String? memo,
     final List<String> tags,
+    final String? photoPath,
     required final String createdAt,
     required final String updatedAt,
   }) = _$MoodRecordImpl;
@@ -325,6 +345,8 @@ abstract class _MoodRecord implements MoodRecord {
   String? get memo;
   @override
   List<String> get tags;
+  @override
+  String? get photoPath;
   @override
   String get createdAt;
   @override

@@ -16,6 +16,7 @@ _$MoodRecordImpl _$$MoodRecordImplFromJson(Map<String, dynamic> json) =>
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           const [],
+      photoPath: json['photoPath'] as String?,
       createdAt: json['createdAt'] as String,
       updatedAt: json['updatedAt'] as String,
     );
@@ -28,6 +29,7 @@ Map<String, dynamic> _$$MoodRecordImplToJson(_$MoodRecordImpl instance) =>
       'moodLevel': instance.moodLevel,
       'memo': instance.memo,
       'tags': instance.tags,
+      'photoPath': instance.photoPath,
       'createdAt': instance.createdAt,
       'updatedAt': instance.updatedAt,
     };
