@@ -22,7 +22,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('ホーム'), findsWidgets);
-    expect(find.text('カレンダー'), findsOneWidget);
     expect(find.text('統計'), findsOneWidget);
     expect(find.text('設定'), findsOneWidget);
   });

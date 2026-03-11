@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:namikibun/constants/design_tokens.dart';
 import 'package:namikibun/providers/theme_provider.dart';
-import 'package:namikibun/screens/home_screen.dart';
 import 'package:namikibun/screens/calendar_screen.dart';
+import 'package:namikibun/screens/day_detail_screen.dart';
 import 'package:namikibun/screens/stats_screen.dart';
 import 'package:namikibun/screens/settings_screen.dart';
 import 'package:namikibun/theme/app_theme.dart';
@@ -25,16 +25,6 @@ final goRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/home',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: HomeScreen(),
-              ),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/calendar',
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: CalendarScreen(),
               ),
@@ -62,6 +52,28 @@ final goRouter = GoRouter(
           ],
         ),
       ],
+    ),
+    // 日別記録画面（ボトムナビ非表示、pushで遷移）
+    GoRoute(
+      path: '/home/day',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const DayDetailScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          );
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.1),
+              end: Offset.zero,
+            ).animate(curved),
+            child: FadeTransition(opacity: curved, child: child),
+          );
+        },
+      ),
     ),
   ],
 );
@@ -93,14 +105,9 @@ class ScaffoldWithBottomNav extends StatelessWidget {
           animationDuration: const Duration(milliseconds: 300),
           destinations: const [
             NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'ホーム',
-            ),
-            NavigationDestination(
               icon: Icon(Icons.calendar_month_outlined),
               selectedIcon: Icon(Icons.calendar_month),
-              label: 'カレンダー',
+              label: 'ホーム',
             ),
             NavigationDestination(
               icon: Icon(Icons.bar_chart_outlined),

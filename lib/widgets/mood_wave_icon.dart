@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:namikibun/constants/app_constants.dart';
 
 /// 波キャラクター「なみちゃん」アイコン
-/// 波の形が体で、その上にかわいい顔がある。
-/// 波の高さ・勢い・形で気分を直感的に表現する。
+/// ぷっくり丸い雫型ボディ、大きな目にハイライト2点、ほっぺ付き。
 class MoodWaveIcon extends StatelessWidget {
   const MoodWaveIcon({
     super.key,
@@ -68,181 +67,282 @@ class _MoodWavePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
     // ソフトシャドウ
     if (showShadow) {
       final shadowPaint = Paint()
-        ..color = color.withValues(alpha: 0.2)
+        ..color = color.withValues(alpha: 0.15)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-      _drawWaveBody(canvas, size, shadowPaint, dy: 2);
+      _drawDropletBody(canvas, w, h, shadowPaint, dy: 2);
     }
 
-    // 波の体を描画
+    // ボディグラデーション（上が明るく、下が暗い）
+    final bodyRect = Rect.fromLTWH(0, 0, w, h);
     final bodyPaint = Paint()
-      ..color = color
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color.lerp(color, Colors.white, 0.25)!,
+          color,
+          Color.lerp(color, Colors.black, 0.1)!,
+        ],
+        stops: const [0.0, 0.5, 1.0],
+      ).createShader(bodyRect)
       ..style = PaintingStyle.fill;
-    _drawWaveBody(canvas, size, bodyPaint);
+    _drawDropletBody(canvas, w, h, bodyPaint);
+
+    // ボディハイライト（白い楕円）
+    final highlightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.3)
+      ..style = PaintingStyle.fill;
+    canvas.save();
+    canvas.translate(w * 0.35, h * 0.3);
+    canvas.rotate(-0.3);
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset.zero, width: w * 0.2, height: w * 0.35),
+      highlightPaint,
+    );
+    canvas.restore();
 
     // 顔を描画
-    _drawFace(canvas, size);
-  }
-
-  void _drawWaveBody(Canvas canvas, Size size, Paint paint, {double dy = 0}) {
-    final w = size.width;
-    final h = size.height;
-    final path = Path();
-
-    // 波の高さをレベルに応じて変える
-    // L1: 低い, L5: 高い
-    final waveTop = switch (level) {
-      5 => h * 0.15, // 大きく跳ね上がる
-      4 => h * 0.25, // ゆるやかに高い
-      3 => h * 0.38, // 平坦
-      2 => h * 0.45, // 低い
-      _ => h * 0.52, // しぼんだ
-    };
-
-    final baseY = h * 0.85 + dy;
-
-    switch (level) {
-      case 5:
-        // 大きく跳ね上がる元気な波
-        path.moveTo(0, baseY);
-        path.quadraticBezierTo(w * 0.15, baseY, w * 0.25, h * 0.55 + dy);
-        path.quadraticBezierTo(w * 0.38, waveTop + dy - h * 0.05, w * 0.5, waveTop + dy);
-        path.quadraticBezierTo(w * 0.62, waveTop + dy + h * 0.05, w * 0.75, h * 0.45 + dy);
-        path.quadraticBezierTo(w * 0.88, h * 0.6 + dy, w, baseY);
-        path.lineTo(w, h + dy);
-        path.lineTo(0, h + dy);
-        path.close();
-
-      case 4:
-        // ゆるやかに高い波
-        path.moveTo(0, baseY);
-        path.quadraticBezierTo(w * 0.2, h * 0.5 + dy, w * 0.35, h * 0.35 + dy);
-        path.quadraticBezierTo(w * 0.5, waveTop + dy, w * 0.65, h * 0.35 + dy);
-        path.quadraticBezierTo(w * 0.8, h * 0.5 + dy, w, baseY);
-        path.lineTo(w, h + dy);
-        path.lineTo(0, h + dy);
-        path.close();
-
-      case 3:
-        // 平坦で穏やかな波
-        path.moveTo(0, baseY);
-        path.quadraticBezierTo(w * 0.2, h * 0.5 + dy, w * 0.35, waveTop + dy);
-        path.quadraticBezierTo(w * 0.5, waveTop - h * 0.02 + dy, w * 0.65, waveTop + dy);
-        path.quadraticBezierTo(w * 0.8, h * 0.5 + dy, w, baseY);
-        path.lineTo(w, h + dy);
-        path.lineTo(0, h + dy);
-        path.close();
-
-      case 2:
-        // 低くうねった波
-        path.moveTo(0, baseY);
-        path.quadraticBezierTo(w * 0.15, h * 0.6 + dy, w * 0.3, waveTop + dy);
-        path.quadraticBezierTo(w * 0.45, h * 0.55 + dy, w * 0.55, h * 0.5 + dy);
-        path.quadraticBezierTo(w * 0.7, waveTop + dy + h * 0.05, w * 0.85, h * 0.55 + dy);
-        path.quadraticBezierTo(w * 0.92, h * 0.65 + dy, w, baseY);
-        path.lineTo(w, h + dy);
-        path.lineTo(0, h + dy);
-        path.close();
-
-      default: // 1
-        // しぼんだ小さな波
-        path.moveTo(0, baseY);
-        path.quadraticBezierTo(w * 0.25, h * 0.6 + dy, w * 0.4, waveTop + dy);
-        path.quadraticBezierTo(w * 0.5, waveTop - h * 0.02 + dy, w * 0.6, waveTop + dy);
-        path.quadraticBezierTo(w * 0.75, h * 0.6 + dy, w, baseY);
-        path.lineTo(w, h + dy);
-        path.lineTo(0, h + dy);
-        path.close();
-    }
-
-    canvas.drawPath(path, paint);
+    _drawFace(canvas, w, h);
 
     // L5: しぶきエフェクト
-    if (level == 5 && paint.style == PaintingStyle.fill && paint.maskFilter == null) {
+    if (level == 5) {
       final splashPaint = Paint()
-        ..color = color.withValues(alpha: 0.5)
+        ..color = color.withValues(alpha: 0.4)
         ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset(w * 0.38, waveTop + dy - h * 0.04), w * 0.03, splashPaint);
-      canvas.drawCircle(Offset(w * 0.55, waveTop + dy - h * 0.06), w * 0.02, splashPaint);
-      canvas.drawCircle(Offset(w * 0.62, waveTop + dy - h * 0.02), w * 0.025, splashPaint);
+      canvas.drawCircle(Offset(w * 0.2, h * 0.2), w * 0.03, splashPaint);
+      canvas.drawCircle(Offset(w * 0.82, h * 0.15), w * 0.025, splashPaint);
+      canvas.drawCircle(Offset(w * 0.78, h * 0.28), w * 0.02, splashPaint);
     }
   }
 
-  void _drawFace(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
+  /// 雫型のぷっくりボディ
+  void _drawDropletBody(Canvas canvas, double w, double h, Paint paint, {double dy = 0}) {
+    final path = Path();
 
-    // 顔の位置（波の頂上付近）
-    final faceY = switch (level) {
-      5 => h * 0.28,
-      4 => h * 0.35,
-      3 => h * 0.45,
-      2 => h * 0.52,
-      _ => h * 0.58,
+    // 波の高さをレベルで変える
+    final topY = switch (level) {
+      5 => h * 0.12,
+      4 => h * 0.18,
+      3 => h * 0.25,
+      2 => h * 0.30,
+      _ => h * 0.35,
     };
-    final faceCx = w * 0.5;
-    final eyeSpacing = w * 0.12;
-    final eyeSize = w * 0.04;
 
-    final facePaint = Paint()..style = PaintingStyle.fill;
+    // 雫型: 上部は丸い頭、下部は広がる丸いボディ
+    final cx = w * 0.5;
+    final bottomY = h * 0.92 + dy;
+    final bodyWidth = w * 0.42;
+
+    path.moveTo(cx, topY + dy);
+    // 左側カーブ
+    path.cubicTo(
+      cx - bodyWidth * 0.5, topY + dy,
+      cx - bodyWidth, h * 0.45 + dy,
+      cx - bodyWidth, h * 0.65 + dy,
+    );
+    // 左下の丸み
+    path.cubicTo(
+      cx - bodyWidth, h * 0.82 + dy,
+      cx - bodyWidth * 0.6, bottomY,
+      cx, bottomY,
+    );
+    // 右下の丸み
+    path.cubicTo(
+      cx + bodyWidth * 0.6, bottomY,
+      cx + bodyWidth, h * 0.82 + dy,
+      cx + bodyWidth, h * 0.65 + dy,
+    );
+    // 右側カーブ
+    path.cubicTo(
+      cx + bodyWidth, h * 0.45 + dy,
+      cx + bodyWidth * 0.5, topY + dy,
+      cx, topY + dy,
+    );
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  void _drawFace(Canvas canvas, double w, double h) {
+    // 顔の位置（下寄りに配置）
+    final faceY = h * 0.58;
+    final faceCx = w * 0.5;
+    final eyeSpacing = w * 0.13;
+    final eyeSize = w * 0.055;
+
+    // ほっぺ（全レベル共通、薄いピンク）
+    final cheekPaint = Paint()
+      ..color = const Color(0xFFFF9999).withValues(alpha: 0.35)
+      ..style = PaintingStyle.fill;
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(faceCx - eyeSpacing - w * 0.04, faceY + w * 0.08),
+        width: w * 0.1,
+        height: w * 0.06,
+      ),
+      cheekPaint,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(faceCx + eyeSpacing + w * 0.04, faceY + w * 0.08),
+        width: w * 0.1,
+        height: w * 0.06,
+      ),
+      cheekPaint,
+    );
 
     switch (level) {
       case 5:
-        // キラキラした目（星型ハイライト）
-        _drawStarEye(canvas, Offset(faceCx - eyeSpacing, faceY), eyeSize * 1.3);
-        _drawStarEye(canvas, Offset(faceCx + eyeSpacing, faceY), eyeSize * 1.3);
-        // 大きなにっこり口
-        _drawSmile(canvas, Offset(faceCx, faceY + w * 0.08), w * 0.1, big: true);
+        // キラキラ目（大きな丸目+ハイライト2点）
+        _drawBigEye(canvas, Offset(faceCx - eyeSpacing, faceY), eyeSize * 1.3,
+            sparkle: true);
+        _drawBigEye(canvas, Offset(faceCx + eyeSpacing, faceY), eyeSize * 1.3,
+            sparkle: true);
+        // 大きなにっこり
+        _drawSmile(canvas, Offset(faceCx, faceY + w * 0.1), w * 0.1, big: true);
 
       case 4:
         // ニコニコ半月目
-        _drawHalfMoonEye(canvas, Offset(faceCx - eyeSpacing, faceY), eyeSize * 1.2);
-        _drawHalfMoonEye(canvas, Offset(faceCx + eyeSpacing, faceY), eyeSize * 1.2);
-        // やさしい微笑み
-        _drawSmile(canvas, Offset(faceCx, faceY + w * 0.07), w * 0.08);
+        _drawHappyEye(canvas, Offset(faceCx - eyeSpacing, faceY), eyeSize * 1.2);
+        _drawHappyEye(canvas, Offset(faceCx + eyeSpacing, faceY), eyeSize * 1.2);
+        // 微笑み
+        _drawSmile(canvas, Offset(faceCx, faceY + w * 0.09), w * 0.08);
 
       case 3:
-        // まん丸の目
-        facePaint.color = Colors.white;
-        canvas.drawCircle(Offset(faceCx - eyeSpacing, faceY), eyeSize, facePaint);
-        canvas.drawCircle(Offset(faceCx + eyeSpacing, faceY), eyeSize, facePaint);
-        facePaint.color = const Color(0xFF4A4A4A);
-        canvas.drawCircle(Offset(faceCx - eyeSpacing, faceY), eyeSize * 0.6, facePaint);
-        canvas.drawCircle(Offset(faceCx + eyeSpacing, faceY), eyeSize * 0.6, facePaint);
+        // まん丸の目+ハイライト
+        _drawBigEye(canvas, Offset(faceCx - eyeSpacing, faceY), eyeSize);
+        _drawBigEye(canvas, Offset(faceCx + eyeSpacing, faceY), eyeSize);
         // 横一文字の口
         final mouthPaint = Paint()
-          ..color = const Color(0xFF4A4A4A)
+          ..color = const Color(0xFF5A5A5A)
           ..strokeWidth = w * 0.02
           ..strokeCap = StrokeCap.round;
         canvas.drawLine(
-          Offset(faceCx - w * 0.05, faceY + w * 0.08),
-          Offset(faceCx + w * 0.05, faceY + w * 0.08),
+          Offset(faceCx - w * 0.05, faceY + w * 0.1),
+          Offset(faceCx + w * 0.05, faceY + w * 0.1),
           mouthPaint,
         );
 
       case 2:
-        // 下がり気味の目
-        _drawSadEye(canvas, Offset(faceCx - eyeSpacing, faceY), eyeSize, isLeft: true);
-        _drawSadEye(canvas, Offset(faceCx + eyeSpacing, faceY), eyeSize, isLeft: false);
+        // 困り目
+        _drawBigEye(canvas, Offset(faceCx - eyeSpacing, faceY), eyeSize,
+            droopy: true, isLeft: true);
+        _drawBigEye(canvas, Offset(faceCx + eyeSpacing, faceY), eyeSize,
+            droopy: true, isLeft: false);
         // への字口
-        _drawFrown(canvas, Offset(faceCx, faceY + w * 0.08), w * 0.08);
+        _drawFrown(canvas, Offset(faceCx, faceY + w * 0.1), w * 0.08);
 
       default: // 1
-        // 涙が一滴垂れる目
-        _drawCryingEye(canvas, Offset(faceCx - eyeSpacing, faceY), eyeSize, withTear: true);
-        _drawCryingEye(canvas, Offset(faceCx + eyeSpacing, faceY), eyeSize, withTear: false);
+        // うるうる目（涙付き）
+        _drawBigEye(canvas, Offset(faceCx - eyeSpacing, faceY), eyeSize,
+            teary: true);
+        _drawBigEye(canvas, Offset(faceCx + eyeSpacing, faceY), eyeSize,
+            teary: true);
         // 大きく下がった口
-        _drawFrown(canvas, Offset(faceCx, faceY + w * 0.08), w * 0.1, deep: true);
+        _drawFrown(canvas, Offset(faceCx, faceY + w * 0.1), w * 0.1, deep: true);
     }
   }
 
-  void _drawStarEye(Canvas canvas, Offset center, double size) {
-    final paint = Paint()
+  /// 大きな丸目（ハイライト2点入り）
+  void _drawBigEye(Canvas canvas, Offset center, double size, {
+    bool sparkle = false,
+    bool droopy = false,
+    bool teary = false,
+    bool isLeft = true,
+  }) {
+    // 白目
+    final whitePaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, size * 1.3, whitePaint);
 
+    // 黒目
+    final pupilPaint = Paint()
+      ..color = const Color(0xFF3A3A3A)
+      ..style = PaintingStyle.fill;
+    final pupilOffset = droopy
+        ? Offset(center.dx, center.dy + size * 0.2)
+        : center;
+    canvas.drawCircle(pupilOffset, size * 0.85, pupilPaint);
+
+    // ハイライト大（右上）
+    final hlPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(
+      Offset(pupilOffset.dx + size * 0.3, pupilOffset.dy - size * 0.3),
+      size * 0.35,
+      hlPaint,
+    );
+    // ハイライト小（左下）
+    canvas.drawCircle(
+      Offset(pupilOffset.dx - size * 0.2, pupilOffset.dy + size * 0.2),
+      size * 0.18,
+      hlPaint,
+    );
+
+    // キラキラ追加（L5）
+    if (sparkle) {
+      final sparklePaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.9)
+        ..style = PaintingStyle.fill;
+      // 小さな星型ハイライト
+      _drawTinyStar(canvas, Offset(
+        pupilOffset.dx + size * 0.5,
+        pupilOffset.dy - size * 0.5,
+      ), size * 0.2, sparklePaint);
+    }
+
+    // 涙（L1）
+    if (teary) {
+      final tearPaint = Paint()
+        ..color = const Color(0xFF88CCFF).withValues(alpha: 0.6)
+        ..style = PaintingStyle.fill;
+      final tearPath = Path();
+      final tearStart = Offset(center.dx + size * 0.8, center.dy + size * 0.5);
+      tearPath.moveTo(tearStart.dx, tearStart.dy);
+      tearPath.quadraticBezierTo(
+        tearStart.dx + size * 0.3, tearStart.dy + size * 1.0,
+        tearStart.dx, tearStart.dy + size * 1.3,
+      );
+      tearPath.quadraticBezierTo(
+        tearStart.dx - size * 0.3, tearStart.dy + size * 1.0,
+        tearStart.dx, tearStart.dy,
+      );
+      canvas.drawPath(tearPath, tearPaint);
+    }
+
+    // 困り眉（L2）- 左右対称にスラント
+    if (droopy) {
+      final browPaint = Paint()
+        ..color = const Color(0xFF5A5A5A)
+        ..strokeWidth = size * 0.25
+        ..strokeCap = StrokeCap.round;
+      if (isLeft) {
+        // 左目: 外側が下がる（左下→右上）
+        canvas.drawLine(
+          Offset(center.dx - size * 0.8, center.dy - size * 1.5),
+          Offset(center.dx + size * 0.8, center.dy - size * 1.8),
+          browPaint,
+        );
+      } else {
+        // 右目: 外側が下がる（左上→右下）
+        canvas.drawLine(
+          Offset(center.dx - size * 0.8, center.dy - size * 1.8),
+          Offset(center.dx + size * 0.8, center.dy - size * 1.5),
+          browPaint,
+        );
+      }
+    }
+  }
+
+  void _drawTinyStar(Canvas canvas, Offset center, double size, Paint paint) {
     final path = Path();
     const points = 4;
     for (int i = 0; i < points * 2; i++) {
@@ -262,20 +362,26 @@ class _MoodWavePainter extends CustomPainter {
     canvas.drawPath(path, paint);
   }
 
-  void _drawHalfMoonEye(Canvas canvas, Offset center, double size) {
+  /// ニコニコ半月目（L4）
+  void _drawHappyEye(Canvas canvas, Offset center, double size) {
     final paint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
+      ..color = const Color(0xFF3A3A3A)
+      ..strokeWidth = size * 0.4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
-    // 半月目（下半分の弧）
-    final rect = Rect.fromCenter(center: center, width: size * 2.2, height: size * 1.8);
-    canvas.drawArc(rect, 0, -pi, true, paint);
+    final rect = Rect.fromCenter(
+      center: Offset(center.dx, center.dy + size * 0.2),
+      width: size * 2.0,
+      height: size * 1.5,
+    );
+    canvas.drawArc(rect, pi, pi, false, paint);
   }
 
   void _drawSmile(Canvas canvas, Offset center, double width, {bool big = false}) {
     final paint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = width * 0.2
+      ..color = const Color(0xFF5A5A5A)
+      ..strokeWidth = width * 0.18
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
@@ -288,72 +394,10 @@ class _MoodWavePainter extends CustomPainter {
     canvas.drawArc(rect, pi * (0.5 - sweepAngle / 2), pi * sweepAngle, false, paint);
   }
 
-  void _drawSadEye(Canvas canvas, Offset center, double size, {required bool isLeft}) {
-    // 白目
-    final whitePaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, size, whitePaint);
-
-    // 黒目（少し下に）
-    final pupilPaint = Paint()
-      ..color = const Color(0xFF4A4A4A)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(center.dx, center.dy + size * 0.2), size * 0.55, pupilPaint);
-
-    // 下がった眉
-    final browPaint = Paint()
-      ..color = const Color(0xFF4A4A4A)
-      ..strokeWidth = size * 0.35
-      ..strokeCap = StrokeCap.round;
-    final browStart = isLeft
-        ? Offset(center.dx - size * 1.2, center.dy - size * 0.8)
-        : Offset(center.dx - size * 0.6, center.dy - size * 1.2);
-    final browEnd = isLeft
-        ? Offset(center.dx + size * 0.6, center.dy - size * 1.2)
-        : Offset(center.dx + size * 1.2, center.dy - size * 0.8);
-    canvas.drawLine(browStart, browEnd, browPaint);
-  }
-
-  void _drawCryingEye(Canvas canvas, Offset center, double size, {required bool withTear}) {
-    // 閉じた目（横線、少し下がった弧）
-    final eyePaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = size * 0.4
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-
-    final rect = Rect.fromCenter(
-      center: Offset(center.dx, center.dy + size * 0.3),
-      width: size * 2.5,
-      height: size * 1.5,
-    );
-    canvas.drawArc(rect, -pi * 0.8, pi * 0.6, false, eyePaint);
-
-    // 涙
-    if (withTear) {
-      final tearPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.8)
-        ..style = PaintingStyle.fill;
-      final tearPath = Path();
-      final tearTop = Offset(center.dx + size * 0.3, center.dy + size * 0.8);
-      tearPath.moveTo(tearTop.dx, tearTop.dy);
-      tearPath.quadraticBezierTo(
-        tearTop.dx + size * 0.5, tearTop.dy + size * 1.5,
-        tearTop.dx, tearTop.dy + size * 2.0,
-      );
-      tearPath.quadraticBezierTo(
-        tearTop.dx - size * 0.5, tearTop.dy + size * 1.5,
-        tearTop.dx, tearTop.dy,
-      );
-      canvas.drawPath(tearPath, tearPaint);
-    }
-  }
-
   void _drawFrown(Canvas canvas, Offset center, double width, {bool deep = false}) {
     final paint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = width * 0.2
+      ..color = const Color(0xFF5A5A5A)
+      ..strokeWidth = width * 0.18
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
@@ -371,7 +415,7 @@ class _MoodWavePainter extends CustomPainter {
       level != oldDelegate.level || color != oldDelegate.color;
 }
 
-/// グラフ軸用の簡略版（波シルエットのみ）
+/// グラフ軸用の簡略版（雫シルエットのみ）
 class _MoodWaveMiniPainter extends CustomPainter {
   _MoodWaveMiniPainter({required this.level, required this.color});
 
@@ -386,19 +430,24 @@ class _MoodWaveMiniPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
 
-    final waveTop = switch (level) {
-      5 => h * 0.1,
-      4 => h * 0.2,
-      3 => h * 0.35,
-      2 => h * 0.45,
-      _ => h * 0.55,
+    final topY = switch (level) {
+      5 => h * 0.05,
+      4 => h * 0.15,
+      3 => h * 0.25,
+      2 => h * 0.35,
+      _ => h * 0.45,
     };
 
+    final cx = w * 0.5;
+    final bottomY = h * 0.95;
+    final bodyW = w * 0.42;
+
     final path = Path();
-    path.moveTo(0, h);
-    path.quadraticBezierTo(w * 0.25, h * 0.7, w * 0.4, waveTop);
-    path.quadraticBezierTo(w * 0.5, waveTop - h * 0.05, w * 0.6, waveTop);
-    path.quadraticBezierTo(w * 0.75, h * 0.7, w, h);
+    path.moveTo(cx, topY);
+    path.cubicTo(cx - bodyW * 0.5, topY, cx - bodyW, h * 0.45, cx - bodyW, h * 0.65);
+    path.cubicTo(cx - bodyW, h * 0.82, cx - bodyW * 0.6, bottomY, cx, bottomY);
+    path.cubicTo(cx + bodyW * 0.6, bottomY, cx + bodyW, h * 0.82, cx + bodyW, h * 0.65);
+    path.cubicTo(cx + bodyW, h * 0.45, cx + bodyW * 0.5, topY, cx, topY);
     path.close();
 
     canvas.drawPath(path, paint);

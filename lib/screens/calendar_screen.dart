@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +9,7 @@ import 'package:namikibun/constants/design_tokens.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/providers/mood_provider.dart';
 import 'package:namikibun/utils/date_utils.dart';
-import 'package:namikibun/widgets/mini_wave_painter.dart';
+import 'package:namikibun/widgets/mood_wave_icon.dart';
 
 class CalendarScreen extends ConsumerWidget {
   const CalendarScreen({super.key});
@@ -26,16 +28,6 @@ class CalendarScreen extends ConsumerWidget {
             data: (days) => days > 0
                 ? _StreakBadge(days: days)
                 : const SizedBox.shrink(),
-            loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
-          ),
-
-          // 月サマリーグラフ
-          calendarAsync.when(
-            data: (recordsMap) => _MonthlySummaryWave(
-              month: selectedMonth,
-              recordsMap: recordsMap,
-            ),
             loading: () => const SizedBox.shrink(),
             error: (_, _) => const SizedBox.shrink(),
           ),
@@ -65,7 +57,7 @@ class CalendarScreen extends ConsumerWidget {
           // 曜日ヘッダー
           const _WeekdayHeader(),
 
-          // カレンダーグリッド（左右スワイプ対応）
+          // カレンダーグリッド（背景に月間波形、左右スワイプ対応）
           Expanded(
             child: GestureDetector(
               onHorizontalDragEnd: (details) {
@@ -83,12 +75,12 @@ class CalendarScreen extends ConsumerWidget {
                 }
               },
               child: calendarAsync.when(
-                data: (recordsMap) => _CalendarGrid(
+                data: (recordsMap) => _CalendarBody(
                   month: selectedMonth,
                   recordsMap: recordsMap,
                   onDayTapped: (date) {
                     ref.read(selectedDateProvider.notifier).state = date;
-                    context.go('/home');
+                    context.push('/home/day');
                   },
                 ),
                 loading: () =>
@@ -103,22 +95,63 @@ class CalendarScreen extends ConsumerWidget {
   }
 }
 
-/// 月全体の気分推移サマリーグラフ（横長の波形ライン）
-class _MonthlySummaryWave extends StatelessWidget {
-  const _MonthlySummaryWave({
+/// カレンダー本体（背景波形 + グリッド）
+class _CalendarBody extends StatelessWidget {
+  const _CalendarBody({
     required this.month,
     required this.recordsMap,
+    required this.onDayTapped,
   });
 
   final DateTime month;
   final Map<String, List<MoodRecord>> recordsMap;
+  final ValueChanged<DateTime> onDayTapped;
 
   @override
   Widget build(BuildContext context) {
-    final lastDay = DateTime(month.year, month.month + 1, 0).day;
-    // 日付インデックス付きの平均データ（記録がない日はnull）
-    final dailyData = <_DayAverage>[];
+    return Stack(
+      children: [
+        // 背景波形（RepaintBoundary で最適化）
+        Positioned.fill(
+          child: RepaintBoundary(
+            child: CustomPaint(
+              painter: _BackgroundWavePainter(
+                month: month,
+                recordsMap: recordsMap,
+                brightness: Theme.of(context).brightness,
+              ),
+            ),
+          ),
+        ),
+        // カレンダーグリッド
+        _CalendarGrid(
+          month: month,
+          recordsMap: recordsMap,
+          onDayTapped: onDayTapped,
+        ),
+      ],
+    );
+  }
+}
 
+/// 月間の気分推移を背景全面に波で描画するペインター
+class _BackgroundWavePainter extends CustomPainter {
+  _BackgroundWavePainter({
+    required this.month,
+    required this.recordsMap,
+    required this.brightness,
+  });
+
+  final DateTime month;
+  final Map<String, List<MoodRecord>> recordsMap;
+  final Brightness brightness;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final lastDay = DateTime(month.year, month.month + 1, 0).day;
+
+    // 日ごとの平均気分を収集
+    final dataPoints = <_WavePoint>[];
     for (int d = 1; d <= lastDay; d++) {
       final dateStr = AppDateUtils.formatDate(
         DateTime(month.year, month.month, d),
@@ -127,73 +160,42 @@ class _MonthlySummaryWave extends StatelessWidget {
       if (records != null && records.isNotEmpty) {
         final avg = records.map((r) => r.moodLevel).reduce((a, b) => a + b) /
             records.length;
-        dailyData.add(_DayAverage(day: d, lastDay: lastDay, average: avg));
+        dataPoints.add(_WavePoint(day: d, average: avg));
       }
     }
 
-    if (dailyData.isEmpty) return const SizedBox.shrink();
+    if (dataPoints.isEmpty) return;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      height: 40,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusS),
-      ),
-      child: CustomPaint(
-        size: const Size(double.infinity, 40),
-        painter: _SummaryWavePainter(
-          dailyData: dailyData,
-          brightness: Theme.of(context).brightness,
-        ),
-      ),
-    );
-  }
-}
-
-class _DayAverage {
-  const _DayAverage({required this.day, required this.lastDay, required this.average});
-  final int day;
-  final int lastDay;
-  final double average;
-
-  /// 月の中での正規化位置 (0.0 ~ 1.0)
-  double get normalized => (day - 1) / (lastDay - 1).clamp(1, 999);
-}
-
-class _SummaryWavePainter extends CustomPainter {
-  _SummaryWavePainter({required this.dailyData, required this.brightness});
-
-  final List<_DayAverage> dailyData;
-  final Brightness brightness;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (dailyData.isEmpty) return;
-
+    // X座標: 日を画面幅にマッピング
     final points = <Offset>[];
-    for (final d in dailyData) {
-      final x = dailyData.length == 1
-          ? size.width / 2
-          : d.normalized * size.width;
-      final y = size.height - ((d.average - 1) / 4) * size.height * 0.7 - size.height * 0.15;
+    final gapSegments = <_GapSegment>[];
+
+    for (int i = 0; i < dataPoints.length; i++) {
+      final x = (dataPoints[i].day - 1) / (lastDay - 1).clamp(1, 999) * size.width;
+      final y = size.height -
+          ((dataPoints[i].average - 1) / 4) * size.height * 0.6 -
+          size.height * 0.2;
       points.add(Offset(x, y));
+
+      // 5日以上のギャップを検出
+      if (i > 0) {
+        final gap = dataPoints[i].day - dataPoints[i - 1].day;
+        if (gap >= 5) {
+          gapSegments.add(_GapSegment(startIndex: i - 1, endIndex: i));
+        }
+      }
     }
 
-    final paint = Paint()
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..color = const Color(0xFF4A90D9);
-
     if (points.length == 1) {
+      // 1点のみ: ドット
       final dotPaint = Paint()
-        ..color = const Color(0xFF4A90D9)
+        ..color = const Color(0xFF4A90D9).withValues(alpha: 0.3)
         ..style = PaintingStyle.fill;
-      canvas.drawCircle(points.first, 3, dotPaint);
+      canvas.drawCircle(points.first, 6, dotPaint);
       return;
     }
 
+    // Catmull-Romスプラインでパスを構築
     final path = Path();
     path.moveTo(points[0].dx, points[0].dy);
 
@@ -211,12 +213,66 @@ class _SummaryWavePainter extends CustomPainter {
       path.cubicTo(cp1x, cp1y, cp2x, cp2y, p2.dx, p2.dy);
     }
 
-    canvas.drawPath(path, paint);
+    // 塗りつぶし用パス
+    final fillPath = Path.from(path);
+    fillPath.lineTo(points.last.dx, size.height);
+    fillPath.lineTo(points.first.dx, size.height);
+    fillPath.close();
+
+    // グラデーション塗りつぶし
+    final baseAlpha = brightness == Brightness.dark ? 0.12 : 0.08;
+    final fillPaint = Paint()
+      ..shader = ui.Gradient.linear(
+        Offset(0, 0),
+        Offset(0, size.height),
+        [
+          const Color(0xFF4A90D9).withValues(alpha: baseAlpha),
+          const Color(0xFF4ECDC4).withValues(alpha: baseAlpha * 0.3),
+        ],
+      );
+    canvas.drawPath(fillPath, fillPaint);
+
+    // 線を描画
+    final linePaint = Paint()
+      ..color = const Color(0xFF4A90D9).withValues(alpha: 0.25)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(path, linePaint);
+
+    // ギャップ区間を薄く表示（推測区間）
+    for (final gap in gapSegments) {
+      final gapRect = Rect.fromLTRB(
+        points[gap.startIndex].dx,
+        0,
+        points[gap.endIndex].dx,
+        size.height,
+      );
+      final gapPaint = Paint()
+        ..color = (brightness == Brightness.dark
+            ? Colors.black.withValues(alpha: 0.3)
+            : Colors.white.withValues(alpha: 0.5));
+      canvas.drawRect(gapRect, gapPaint);
+    }
   }
 
   @override
-  bool shouldRepaint(_SummaryWavePainter oldDelegate) =>
-      dailyData != oldDelegate.dailyData;
+  bool shouldRepaint(_BackgroundWavePainter oldDelegate) =>
+      month != oldDelegate.month ||
+      recordsMap != oldDelegate.recordsMap ||
+      brightness != oldDelegate.brightness;
+}
+
+class _WavePoint {
+  const _WavePoint({required this.day, required this.average});
+  final int day;
+  final double average;
+}
+
+class _GapSegment {
+  const _GapSegment({required this.startIndex, required this.endIndex});
+  final int startIndex;
+  final int endIndex;
 }
 
 class _StreakBadge extends StatelessWidget {
@@ -243,7 +299,6 @@ class _StreakBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 波しぶきアイコン
           Icon(
             Icons.water_drop,
             size: 18,
@@ -364,7 +419,7 @@ class _CalendarGrid extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 7,
-        childAspectRatio: 0.8,
+        childAspectRatio: 0.75,
       ),
       itemCount: startWeekday + daysInMonth,
       itemBuilder: (context, index) {
@@ -419,11 +474,10 @@ class _CalendarDayCell extends StatelessWidget {
     final theme = Theme.of(context);
     final avg = _averageMood;
 
-    // 背景色: 平均気分レベルに応じて薄く着色
     Color? bgColor;
     if (avg != null && !isFuture) {
       final level = avg.round().clamp(1, 5);
-      bgColor = AppConstants.moodColors[level]!.withValues(alpha: 0.1);
+      bgColor = AppConstants.moodColors[level]!.withValues(alpha: 0.08);
     }
 
     return GestureDetector(
@@ -436,7 +490,7 @@ class _CalendarDayCell extends StatelessWidget {
               ? Border.all(color: theme.colorScheme.primary, width: 1.5)
               : null,
           color: isFuture
-              ? theme.colorScheme.surface.withValues(alpha: 0.3)
+              ? theme.colorScheme.surface.withValues(alpha: 0.2)
               : bgColor,
         ),
         child: Column(
@@ -454,23 +508,29 @@ class _CalendarDayCell extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 2),
-            if (!isFuture)
-              MiniWaveWidget(
-                records: records,
-                width: 36,
-                height: 20,
-              ),
-            // 記録ありの日: 波キャラ顔ドット
+            // なみちゃんの顔（記録ありの日）or 空のスペース
             if (records.isNotEmpty && !isFuture)
-              Container(
-                width: 4,
-                height: 4,
-                margin: const EdgeInsets.only(top: 1),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppConstants.moodColors[avg!.round().clamp(1, 5)],
+              MoodWaveIconMini(
+                level: avg!.round().clamp(1, 5),
+                size: 22,
+              )
+            else if (!isFuture)
+              SizedBox(
+                width: 22,
+                height: 22,
+                child: Center(
+                  child: Container(
+                    width: 4,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
+                    ),
+                  ),
                 ),
-              ),
+              )
+            else
+              const SizedBox(width: 22, height: 22),
           ],
         ),
       ),
