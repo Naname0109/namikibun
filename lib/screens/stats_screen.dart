@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/constants/design_tokens.dart';
 import 'package:namikibun/providers/stats_provider.dart';
+import 'package:namikibun/providers/tag_provider.dart';
 import 'package:namikibun/utils/date_utils.dart';
 import 'package:namikibun/widgets/ad_banner.dart';
 import 'package:namikibun/widgets/empty_state.dart';
@@ -206,7 +207,7 @@ class _SlotAverageBarChart extends StatelessWidget {
       child: BarChart(
         BarChartData(
           maxY: 5.5,
-          minY: 0,
+          minY: 0.5,
           gridData: const FlGridData(show: false),
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
@@ -215,12 +216,36 @@ class _SlotAverageBarChart extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 28,
+                reservedSize: 50,
                 interval: 1,
                 getTitlesWidget: (value, _) {
-                  final level = value.toInt();
-                  if (level == 5 || level == 1) {
-                    return MoodWaveIconMini(level: level, size: 14);
+                  if ((value - 5).abs() < 0.1) {
+                    return SizedBox(
+                      width: 48,
+                      height: 20,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          MoodWaveIconMini(level: 5, size: 14),
+                          const SizedBox(width: 2),
+                          Text('良い', style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                        ],
+                      ),
+                    );
+                  }
+                  if ((value - 1).abs() < 0.1) {
+                    return SizedBox(
+                      width: 48,
+                      height: 20,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          MoodWaveIconMini(level: 1, size: 14),
+                          const SizedBox(width: 2),
+                          Text('悪い', style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                        ],
+                      ),
+                    );
                   }
                   return const SizedBox.shrink();
                 },
@@ -308,12 +333,36 @@ class _DailyTrendLineChart extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 28,
+                reservedSize: 50,
                 interval: 1,
                 getTitlesWidget: (value, _) {
-                  final level = value.toInt();
-                  if (level == 5 || level == 1) {
-                    return MoodWaveIconMini(level: level, size: 14);
+                  if ((value - 5).abs() < 0.1) {
+                    return SizedBox(
+                      width: 48,
+                      height: 20,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          MoodWaveIconMini(level: 5, size: 14),
+                          const SizedBox(width: 2),
+                          Text('良い', style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                        ],
+                      ),
+                    );
+                  }
+                  if ((value - 1).abs() < 0.1) {
+                    return SizedBox(
+                      width: 48,
+                      height: 20,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          MoodWaveIconMini(level: 1, size: 14),
+                          const SizedBox(width: 2),
+                          Text('悪い', style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                        ],
+                      ),
+                    );
                   }
                   return const SizedBox.shrink();
                 },
@@ -573,14 +622,23 @@ class _WeeklySummaryCard extends StatelessWidget {
 }
 
 /// タグ分析セクション
-class _TagAnalyticsSection extends StatelessWidget {
+class _TagAnalyticsSection extends ConsumerWidget {
   const _TagAnalyticsSection({required this.stats});
 
   final MonthlyStats stats;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final tagsAsync = ref.watch(tagProvider);
+
+    // DBタグから色マップを構築
+    final tagColorMap = <String, Color>{};
+    if (tagsAsync.hasValue) {
+      for (final tag in tagsAsync.value!) {
+        tagColorMap[tag.name] = tagColorFromHex(tag.colorHex);
+      }
+    }
 
     // 使用回数でソート
     final sortedTags = stats.tagCounts.entries.toList()
@@ -601,7 +659,7 @@ class _TagAnalyticsSection extends StatelessWidget {
           final count = entry.value;
           final avg = stats.tagAverages[tag] ?? 3.0;
           final avgLevel = avg.round().clamp(1, 5);
-          final tagColor = AppConstants.tagColors[tag] ?? theme.colorScheme.outline;
+          final tagColor = tagColorMap[tag] ?? AppConstants.tagColors[tag] ?? theme.colorScheme.outline;
           final ratio = count / maxCount;
 
           return Padding(

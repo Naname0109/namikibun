@@ -89,19 +89,6 @@ class _SleepingWavePainter extends CustomPainter {
       bodyPaint,
     );
 
-    // ボディハイライト
-    final hlPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.25)
-      ..style = PaintingStyle.fill;
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(cx - w * 0.05, cy - h * 0.06),
-        width: w * 0.12,
-        height: h * 0.15,
-      ),
-      hlPaint,
-    );
-
     // 三日月型の閉じた目（穏やかな笑顔で寝ている）
     final eyePaint = Paint()
       ..color = color.withValues(alpha: 0.9)

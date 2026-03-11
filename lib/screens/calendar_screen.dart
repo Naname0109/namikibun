@@ -119,6 +119,7 @@ class _CalendarBody extends StatelessWidget {
                 month: month,
                 recordsMap: recordsMap,
                 brightness: Theme.of(context).brightness,
+                today: AppDateUtils.getLogicalToday(),
               ),
             ),
           ),
@@ -140,11 +141,13 @@ class _BackgroundWavePainter extends CustomPainter {
     required this.month,
     required this.recordsMap,
     required this.brightness,
+    required this.today,
   });
 
   final DateTime month;
   final Map<String, List<MoodRecord>> recordsMap;
   final Brightness brightness;
+  final DateTime today;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -166,7 +169,15 @@ class _BackgroundWavePainter extends CustomPainter {
 
     if (dataPoints.isEmpty) return;
 
-    // アンカーポイント: 月初と月末にもポイントを追加して全幅に波を広げる
+    // 今月か過去月かで右端の日を決定（今月なら今日まで、過去月なら月末まで）
+    final isCurrentMonth = month.year == today.year && month.month == today.month;
+    final effectiveLastDay = isCurrentMonth
+        ? today.day.clamp(1, lastDay)
+        : lastDay;
+    // 除算用（最低2にして0除算回避）
+    final maxDay = effectiveLastDay < 2 ? 2 : effectiveLastDay;
+
+    // アンカーポイント: 月初と右端にもポイントを追加して全幅に波を広げる
     final anchoredPoints = <_WavePoint>[];
 
     // 月初アンカー
@@ -176,18 +187,18 @@ class _BackgroundWavePainter extends CustomPainter {
 
     anchoredPoints.addAll(dataPoints);
 
-    // 月末アンカー
-    if (dataPoints.last.day < lastDay) {
-      anchoredPoints.add(_WavePoint(day: lastDay, average: dataPoints.last.average));
+    // 右端アンカー（effectiveLastDayまで）
+    if (dataPoints.last.day < effectiveLastDay) {
+      anchoredPoints.add(_WavePoint(day: effectiveLastDay, average: dataPoints.last.average));
     }
 
-    // X座標: 日を画面幅にマッピング
+    // X座標: 日を画面幅にマッピング（effectiveLastDayが右端に来る）
     final points = <Offset>[];
     final realDataIndices = <int>[]; // 実データのインデックス
     final gapSegments = <_GapSegment>[];
 
     for (int i = 0; i < anchoredPoints.length; i++) {
-      final x = (anchoredPoints[i].day - 1) / (lastDay - 1).clamp(1, 999) * size.width;
+      final x = (anchoredPoints[i].day - 1) / (maxDay - 1) * size.width;
       final y = size.height -
           ((anchoredPoints[i].average - 1) / 4) * size.height * 0.6 -
           size.height * 0.2;
@@ -235,9 +246,9 @@ class _BackgroundWavePainter extends CustomPainter {
       path.cubicTo(cp1x, cp1y, cp2x, cp2y, p2.dx, p2.dy);
     }
 
-    // 塗りつぶし用パス（全幅）
+    // 塗りつぶし用パス（波の範囲内のみ）
     final fillPath = Path.from(path);
-    fillPath.lineTo(size.width, size.height);
+    fillPath.lineTo(points.last.dx, size.height);
     fillPath.lineTo(0, size.height);
     fillPath.close();
 
@@ -310,7 +321,8 @@ class _BackgroundWavePainter extends CustomPainter {
   bool shouldRepaint(_BackgroundWavePainter oldDelegate) =>
       month != oldDelegate.month ||
       recordsMap != oldDelegate.recordsMap ||
-      brightness != oldDelegate.brightness;
+      brightness != oldDelegate.brightness ||
+      today != oldDelegate.today;
 }
 
 class _WavePoint {

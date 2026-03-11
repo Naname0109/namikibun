@@ -98,15 +98,15 @@ class _MoodWavePainter extends CustomPainter {
     // 泡・しぶき（レベルに応じて量が変わる）
     _drawFoam(canvas, w, h);
 
-    // ボディハイライト（白い楕円）
+    // ボディハイライト（白い楕円、さりげなく）
     final highlightPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.3)
+      ..color = Colors.white.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
     canvas.save();
     canvas.translate(w * 0.3, h * 0.45);
     canvas.rotate(-0.3);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: w * 0.18, height: w * 0.3),
+      Rect.fromCenter(center: Offset.zero, width: w * 0.1, height: w * 0.15),
       highlightPaint,
     );
     canvas.restore();

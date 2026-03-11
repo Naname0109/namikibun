@@ -12,6 +12,7 @@ import 'package:namikibun/constants/design_tokens.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/models/slot.dart';
 import 'package:namikibun/providers/mood_provider.dart';
+import 'package:namikibun/providers/tag_provider.dart';
 import 'package:namikibun/widgets/mood_selector.dart';
 import 'package:namikibun/widgets/particle_effect.dart';
 
@@ -167,6 +168,274 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
     }
   }
 
+  Color _moodColor() {
+    if (_selectedMoodLevel == null) return Colors.grey;
+    return AppConstants.moodColors[_selectedMoodLevel!] ?? Colors.grey;
+  }
+
+  Widget _buildSectionLabel(ThemeData theme, String label, {Widget? trailing}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: 6),
+            trailing,
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMoodSelector(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: MoodSelector(
+        selectedLevel: _selectedMoodLevel,
+        onSelected: (level) {
+          HapticFeedback.selectionClick();
+          setState(() => _selectedMoodLevel = level);
+        },
+      ),
+    );
+  }
+
+  Widget _buildMemoField(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: TextField(
+        controller: _memoController,
+        maxLength: AppConstants.memoMaxLength,
+        contextMenuBuilder: (context, editableTextState) {
+          return AdaptiveTextSelectionToolbar.editableText(
+            editableTextState: editableTextState,
+          );
+        },
+        decoration: InputDecoration(
+          hintText: '会議が長かった',
+          hintStyle: TextStyle(
+            fontStyle: FontStyle.italic,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+          ),
+          labelText: 'ひとことメモ',
+          labelStyle: TextStyle(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
+          border: InputBorder.none,
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          counterStyle: TextStyle(
+            fontSize: 11,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTagSelector(ThemeData theme) {
+    final tagsAsync = ref.watch(tagProvider);
+    return tagsAsync.when(
+      data: (tags) => Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: tags.map((tag) {
+          final isSelected = _selectedTags.contains(tag.name);
+          final color = tagColorFromHex(tag.colorHex);
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                if (isSelected) {
+                  _selectedTags.remove(tag.name);
+                } else {
+                  _selectedTags.add(tag.name);
+                }
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? color.withValues(alpha: 0.2)
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected
+                      ? color.withValues(alpha: 0.5)
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                ),
+              ),
+              child: Center(
+                widthFactor: 1,
+                child: Text(
+                  tag.name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    color: isSelected
+                        ? color
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+      loading: () => const SizedBox(
+        height: 36,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (_, _) => const Text('タグの読み込みに失敗しました'),
+    );
+  }
+
+  Widget _buildPhotoSection(ThemeData theme) {
+    if (_photoPath != null) {
+      return Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.file(
+              File(_photoPath!),
+              height: 120,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: GestureDetector(
+              onTap: () => setState(() => _photoPath = null),
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close,
+                  size: 14,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return GestureDetector(
+      onTap: _pickPhoto,
+      child: CustomPaint(
+        painter: _DashedBorderPainter(
+          color: theme.colorScheme.outline.withValues(alpha: 0.3),
+          borderRadius: 16,
+        ),
+        child: Container(
+          height: 64,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.camera_alt_outlined,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '写真を追加',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSaveButton(ThemeData theme) {
+    final moodColor = _moodColor();
+    final isEnabled = _selectedMoodLevel != null && !_isSaving;
+
+    return SizedBox(
+      key: _saveButtonKey,
+      width: double.infinity,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: isEnabled
+              ? LinearGradient(
+                  colors: [
+                    moodColor,
+                    moodColor.withValues(alpha: 0.8),
+                  ],
+                )
+              : null,
+          color: isEnabled ? null : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+        ),
+        child: FilledButton(
+          onPressed: isEnabled ? _save : null,
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            disabledBackgroundColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  isEditing ? '更新' : '保存',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isEnabled
+                        ? Colors.white
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -178,181 +447,131 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
         top: 12,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ドラッグハンドル
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ドラッグハンドル
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
           const SizedBox(height: 20),
 
           // ヘッダー
           Text(
             '${widget.slot.name}の気分',
-            style: theme.textTheme.titleLarge,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 4),
+          Text(
+            '今の気分を選んでください',
+            style: TextStyle(
+              fontSize: 12,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+          const SizedBox(height: 20),
 
           // 気分選択
-          MoodSelector(
-            selectedLevel: _selectedMoodLevel,
-            onSelected: (level) {
-              HapticFeedback.selectionClick();
-              setState(() => _selectedMoodLevel = level);
-            },
-          ),
-          const SizedBox(height: 24),
+          _buildMoodSelector(theme),
+          const SizedBox(height: 20),
 
           // メモ入力
-          TextField(
-            controller: _memoController,
-            maxLength: AppConstants.memoMaxLength,
-            decoration: InputDecoration(
-              hintText: '会議が長かった',
-              labelText: 'ひとことメモ',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
+          _buildMemoField(theme),
+          const SizedBox(height: 20),
 
           // タグ選択
-          Text('タグ', style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: AppConstants.defaultTags.map((tag) {
-              final isSelected = _selectedTags.contains(tag);
-              final tagColor = AppConstants.tagColors[tag];
-              return FilterChip(
-                label: Text(tag),
-                selected: isSelected,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                selectedColor: tagColor?.withValues(alpha: 0.2),
-                onSelected: (selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedTags.add(tag);
-                    } else {
-                      _selectedTags.remove(tag);
-                    }
-                  });
-                },
-              );
-            }).toList(),
+          _buildSectionLabel(
+            theme,
+            'タグ',
+            trailing: _selectedTags.isNotEmpty
+                ? Text(
+                    '(${_selectedTags.length})',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                  )
+                : null,
           ),
-          const SizedBox(height: 16),
+          _buildTagSelector(theme),
+          const SizedBox(height: 20),
 
           // 写真
-          Text('写真', style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: _pickPhoto,
-            child: _photoPath != null
-                ? Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          File(_photoPath!),
-                          height: 120,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: GestureDetector(
-                          onTap: () => setState(() => _photoPath = null),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.black54,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+          _buildSectionLabel(
+            theme,
+            '写真',
+            trailing: _photoPath != null
+                ? Icon(
+                    Icons.check_circle,
+                    size: 16,
+                    color: theme.colorScheme.primary,
                   )
-                : Container(
-                    height: 60,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.add_photo_alternate_outlined,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '写真を追加',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                : null,
           ),
-          const SizedBox(height: 24),
+          _buildPhotoSection(theme),
+          const SizedBox(height: 16),
 
-          // 保存ボタン
-          SizedBox(
-            key: _saveButtonKey,
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _selectedMoodLevel != null && !_isSaving
-                  ? _save
-                  : null,
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusM),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: _isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(isEditing ? '更新' : '保存'),
-            ),
-          ),
-        ],
+            // 保存ボタン
+            _buildSaveButton(theme),
+          ],
+        ),
       ),
     );
   }
+}
+
+/// ダッシュ線ボーダーを描画するペインター
+class _DashedBorderPainter extends CustomPainter {
+  _DashedBorderPainter({
+    required this.color,
+    required this.borderRadius,
+  });
+
+  final Color color;
+  final double borderRadius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Radius.circular(borderRadius),
+    );
+
+    const dashWidth = 6.0;
+    const dashSpace = 4.0;
+    final path = Path()..addRRect(rrect);
+    final metrics = path.computeMetrics();
+    for (final metric in metrics) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final end = distance + dashWidth;
+        canvas.drawPath(
+          metric.extractPath(distance, end.clamp(0, metric.length)),
+          paint,
+        );
+        distance = end + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter oldDelegate) =>
+      color != oldDelegate.color || borderRadius != oldDelegate.borderRadius;
 }

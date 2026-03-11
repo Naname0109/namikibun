@@ -21,7 +21,15 @@
       "Bash(dart run:*)",
       "Bash(flutter analyze:*)",
       "Bash(flutter test:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(flutter run:*)",
+      "Bash(cd C:/Users/tubak/Documents/AppFactory/namikibun*)",
+      "Bash(cd \"C:\\\\Users\\\\tubak\\\\Documents\\\\AppFactory\\\\namikibun\"*)",
+      "Bash(flutter *)",
+      "Bash(dart *)",
+      "Bash(git *)",
+      "Bash(mkdir *)",
+      "Bash(npm update:*)"
     ]
   }
 }

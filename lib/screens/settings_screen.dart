@@ -6,12 +6,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:namikibun/constants/design_tokens.dart';
 import 'package:namikibun/models/slot.dart';
+import 'package:namikibun/models/tag.dart';
 import 'package:namikibun/providers/purchase_provider.dart';
 import 'package:namikibun/providers/slot_provider.dart';
+import 'package:namikibun/providers/tag_provider.dart';
 import 'package:namikibun/providers/theme_provider.dart';
 import 'package:namikibun/screens/passcode_screen.dart';
 import 'package:namikibun/services/notification_service.dart';
 import 'package:namikibun/services/purchase_service.dart';
+import 'package:namikibun/widgets/mood_wave_icon.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -19,6 +22,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final slotsAsync = ref.watch(slotProvider);
+    final tagsAsync = ref.watch(tagProvider);
 
     return SafeArea(
       child: ListView(
@@ -34,15 +38,36 @@ class SettingsScreen extends ConsumerWidget {
 
           // スロット管理
           _sectionTitle(context, 'スロット管理'),
-          _SectionCard(
-            child: slotsAsync.when(
-              data: (slots) => _SlotManagement(slots: slots),
-              loading: () => const Padding(
+          slotsAsync.when(
+            data: (slots) => _SlotManagement(slots: slots),
+            loading: () => const _SectionCard(
+              child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (e, _) => Padding(
-                padding: const EdgeInsets.all(16),
+            ),
+            error: (e, _) => _SectionCard(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: Text('エラー: $e')),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // タグ管理
+          _sectionTitle(context, 'タグ管理'),
+          tagsAsync.when(
+            data: (tags) => _TagManagement(tags: tags),
+            loading: () => const _SectionCard(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
+            error: (e, _) => _SectionCard(
+              child: Padding(
+                padding: EdgeInsets.all(16),
                 child: Center(child: Text('エラー: $e')),
               ),
             ),
@@ -211,94 +236,18 @@ class _SlotManagement extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // カプセル型チップ横並び
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ...slots.map((slot) {
-                final accentColor = theme.colorScheme.primary;
-                return GestureDetector(
-                  onLongPress: () => _showSlotActions(context, ref, slot),
-                  onTap: () => _showRenameDialog(context, ref, slot),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: accentColor.withValues(alpha: 0.25),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: accentColor,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          slot.name,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-              // ＋チップ
-              GestureDetector(
-                onTap: () => _showAddDialog(context, ref),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                      style: BorderStyle.solid,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.add, size: 16, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                      const SizedBox(width: 4),
-                      Text(
-                        '追加',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // スロット一覧カード
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(DesignTokens.radiusM),
+            boxShadow: DesignTokens.softShadow,
           ),
-          if (slots.length > 1) ...[
-            const SizedBox(height: 12),
-            Text(
-              '長押しで編集・削除 / ドラッグで並び替え',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
-              ),
-            ),
-          ],
-          // 並び替えリスト
-          const SizedBox(height: 8),
-          ReorderableListView.builder(
+          clipBehavior: Clip.antiAlias,
+          child: ReorderableListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: slots.length,
@@ -309,84 +258,122 @@ class _SlotManagement extends ConsumerWidget {
               reordered.insert(newIndex, item);
               ref.read(slotProvider.notifier).reorderSlots(reordered);
             },
+            proxyDecorator: (child, index, animation) {
+              return Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(DesignTokens.radiusS),
+                child: child,
+              );
+            },
             itemBuilder: (context, index) {
               final slot = slots[index];
               return Container(
                 key: ValueKey(slot.id),
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
+                color: theme.colorScheme.surface,
+                child: Column(
                   children: [
-                    Icon(
-                      Icons.drag_handle,
-                      size: 18,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        slot.name,
-                        style: theme.textTheme.bodyMedium,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      child: Row(
+                        children: [
+                          // ドラッグハンドル
+                          Icon(
+                            Icons.drag_indicator,
+                            size: 20,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                          ),
+                          const SizedBox(width: 10),
+                          // 波ちゃんアイコン
+                          MoodWaveIconMini(level: 3, size: 20),
+                          const SizedBox(width: 10),
+                          // スロット名 + 通知時刻
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  slot.name,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (slot.notifyTime != null)
+                                  Text(
+                                    '通知 ${slot.notifyTime}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          // 編集ボタン
+                          IconButton(
+                            onPressed: () => _showRenameDialog(context, ref, slot),
+                            icon: const Icon(Icons.edit_outlined, size: 18),
+                            tooltip: 'スロット名を変更',
+                            style: IconButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                              foregroundColor: theme.colorScheme.primary,
+                              minimumSize: const Size(36, 36),
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                          // 削除ボタン
+                          if (slots.length > 1) ...[
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: () => _showDeleteDialog(context, ref, slot),
+                              icon: const Icon(Icons.delete_outline, size: 18),
+                              tooltip: 'スロットを削除',
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.red.withValues(alpha: 0.08),
+                                foregroundColor: Colors.red.shade400,
+                                minimumSize: const Size(36, 36),
+                                padding: EdgeInsets.zero,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    if (slot.startTime != null && slot.endTime != null)
-                      Text(
-                        '${slot.startTime} - ${slot.endTime}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                        ),
+                    if (index < slots.length - 1)
+                      Divider(
+                        height: 1,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
+                        indent: 16,
+                        endIndent: 16,
                       ),
                   ],
                 ),
               );
             },
           ),
-        ],
-      ),
-    );
-  }
-
-  void _showSlotActions(BuildContext context, WidgetRef ref, Slot slot) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusL)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.edit_outlined),
-              title: const Text('名前を変更'),
-              onTap: () {
-                Navigator.pop(context);
-                _showRenameDialog(context, ref, slot);
-              },
-            ),
-            if (slots.length > 1)
-              ListTile(
-                leading: Icon(Icons.delete_outline, color: Colors.red.shade400),
-                title: Text('削除', style: TextStyle(color: Colors.red.shade400)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showDeleteDialog(context, ref, slot);
-                },
-              ),
-            const SizedBox(height: 8),
-          ],
         ),
-      ),
+        const SizedBox(height: 12),
+        // ＋ スロットを追加 ボタン
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _showAddDialog(context, ref),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('スロットを追加'),
+            style: OutlinedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -394,58 +381,146 @@ class _SlotManagement extends ConsumerWidget {
     final controller = TextEditingController(text: slot.name);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('スロット名を変更'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLength: 20,
-          decoration: const InputDecoration(
-            labelText: 'スロット名',
-            border: OutlineInputBorder(),
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
+          backgroundColor: theme.colorScheme.surface,
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+          title: Text(
+            'スロット名を変更',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
           ),
-          FilledButton(
-            onPressed: () {
-              final name = controller.text.trim();
-              if (name.isNotEmpty) {
-                ref.read(slotProvider.notifier).updateSlotName(slot.id, name);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('保存'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Divider(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: TextField(
+                  controller: controller,
+                  autofocus: true,
+                  maxLength: 20,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 18),
+                  cursorColor: theme.colorScheme.primary,
+                  contextMenuBuilder: (context, editableTextState) {
+                    return AdaptiveTextSelectionToolbar.editableText(
+                      editableTextState: editableTextState,
+                    );
+                  },
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    filled: true,
+                    fillColor: Colors.transparent,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    counterStyle: TextStyle(
+                      fontSize: 11,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'キャンセル',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            FilledButton(
+              onPressed: () {
+                final name = controller.text.trim();
+                if (name.isNotEmpty) {
+                  ref.read(slotProvider.notifier).updateSlotName(slot.id, name);
+                  Navigator.pop(context);
+                }
+              },
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text('保存'),
+            ),
+          ],
+        );
+      },
     );
   }
 
   void _showDeleteDialog(BuildContext context, WidgetRef ref, Slot slot) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('スロットを削除'),
-        content: Text('「${slot.name}」を削除しますか？\n過去の記録はそのまま残ります。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
-          TextButton(
-            onPressed: () {
-              ref.read(slotProvider.notifier).deleteSlot(slot.id);
-              Navigator.pop(context);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('削除'),
+          backgroundColor: theme.colorScheme.surface,
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+          title: Text(
+            'スロットを削除',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
           ),
-        ],
-      ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Divider(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '「${slot.name}」を削除しますか？\n過去の記録はそのまま残ります。',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'キャンセル',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            TextButton(
+              onPressed: () {
+                ref.read(slotProvider.notifier).deleteSlot(slot.id);
+                Navigator.pop(context);
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('削除'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -453,35 +528,557 @@ class _SlotManagement extends ConsumerWidget {
     final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('スロットを追加'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLength: 20,
-          decoration: const InputDecoration(
-            labelText: 'スロット名',
-            hintText: '例: 仕事後',
-            border: OutlineInputBorder(),
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: theme.colorScheme.surface,
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+          title: Text(
+            'スロットを追加',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Divider(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: TextField(
+                  controller: controller,
+                  autofocus: true,
+                  maxLength: 20,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 18),
+                  cursorColor: theme.colorScheme.primary,
+                  contextMenuBuilder: (context, editableTextState) {
+                    return AdaptiveTextSelectionToolbar.editableText(
+                      editableTextState: editableTextState,
+                    );
+                  },
+                  decoration: InputDecoration(
+                    hintText: '例: 仕事後',
+                    hintStyle: TextStyle(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                    ),
+                    border: InputBorder.none,
+                    filled: true,
+                    fillColor: Colors.transparent,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    counterStyle: TextStyle(
+                      fontSize: 11,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'キャンセル',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            FilledButton(
+              onPressed: () {
+                final name = controller.text.trim();
+                if (name.isNotEmpty) {
+                  ref.read(slotProvider.notifier).addSlot(name);
+                  Navigator.pop(context);
+                }
+              },
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text('追加'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// --- タグ管理 ---
+
+class _TagManagement extends ConsumerWidget {
+  const _TagManagement({required this.tags});
+
+  final List<Tag> tags;
+
+  static const _paletteColors = [
+    'FF4A90D9', // 青
+    'FF4ECDC4', // 緑
+    'FFFF8C42', // オレンジ
+    'FFE88EBF', // ピンク
+    'FF7EC8E3', // 水色
+    'FF9E9E9E', // グレー
+    'FFE76F51', // コーラル
+    'FF95D5B2', // ライトグリーン
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // タグ一覧カード
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(DesignTokens.radiusM),
+            boxShadow: DesignTokens.softShadow,
+          ),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ...tags.map((tag) {
+                final color = tagColorFromHex(tag.colorHex);
+                return GestureDetector(
+                  onTap: () => _showEditTagDialog(context, ref, tag),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          tag.name,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: color,
+                          ),
+                        ),
+                        if (!tag.isDefault) ...[
+                          const SizedBox(width: 2),
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _showDeleteTagDialog(context, ref, tag),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.close,
+                                size: 14,
+                                color: color.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              // ＋ タグ追加チップ
+              GestureDetector(
+                onTap: () => _showAddTagDialog(context, ref),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add,
+                        size: 14,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'タグを追加',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final name = controller.text.trim();
-              if (name.isNotEmpty) {
-                ref.read(slotProvider.notifier).addSlot(name);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('追加'),
-          ),
-        ],
+      ],
+    );
+  }
+
+  void _showAddTagDialog(BuildContext context, WidgetRef ref) {
+    final controller = TextEditingController();
+    String selectedColor = _paletteColors[0];
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final theme = Theme.of(context);
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            backgroundColor: theme.colorScheme.surface,
+            contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+            title: Text(
+              'タグを追加',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Divider(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    autofocus: true,
+                    maxLength: 10,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 18),
+                    cursorColor: theme.colorScheme.primary,
+                    contextMenuBuilder: (context, editableTextState) {
+                      return AdaptiveTextSelectionToolbar.editableText(
+                        editableTextState: editableTextState,
+                      );
+                    },
+                    decoration: InputDecoration(
+                      hintText: '例: 読書',
+                      hintStyle: TextStyle(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                      ),
+                      border: InputBorder.none,
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      counterStyle: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '色を選択',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _ColorPalette(
+                  colors: _paletteColors,
+                  selectedColor: selectedColor,
+                  onSelected: (color) => setDialogState(() => selectedColor = color),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'キャンセル',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              FilledButton(
+                onPressed: () async {
+                  final name = controller.text.trim();
+                  if (name.isNotEmpty) {
+                    final success = await ref.read(tagProvider.notifier).addTag(name, selectedColor);
+                    if (context.mounted) {
+                      if (success) {
+                        Navigator.pop(context);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('同じ名前のタグが既に存在します')),
+                        );
+                      }
+                    }
+                  }
+                },
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: const Text('追加'),
+              ),
+            ],
+          );
+        },
       ),
+    );
+  }
+
+  void _showEditTagDialog(BuildContext context, WidgetRef ref, Tag tag) {
+    final controller = TextEditingController(text: tag.name);
+    String selectedColor = tag.colorHex;
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final theme = Theme.of(context);
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            backgroundColor: theme.colorScheme.surface,
+            contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+            title: Text(
+              'タグを編集',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Divider(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    autofocus: true,
+                    maxLength: 10,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 18),
+                    cursorColor: theme.colorScheme.primary,
+                    contextMenuBuilder: (context, editableTextState) {
+                      return AdaptiveTextSelectionToolbar.editableText(
+                        editableTextState: editableTextState,
+                      );
+                    },
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      counterStyle: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '色を選択',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _ColorPalette(
+                  colors: _paletteColors,
+                  selectedColor: selectedColor,
+                  onSelected: (color) => setDialogState(() => selectedColor = color),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'キャンセル',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              FilledButton(
+                onPressed: () async {
+                  final name = controller.text.trim();
+                  if (name.isNotEmpty) {
+                    final success = await ref.read(tagProvider.notifier).updateTag(
+                      tag.id,
+                      name: name,
+                      colorHex: selectedColor,
+                    );
+                    if (context.mounted) {
+                      if (success) {
+                        Navigator.pop(context);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('同じ名前のタグが既に存在します')),
+                        );
+                      }
+                    }
+                  }
+                },
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: const Text('保存'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _showDeleteTagDialog(BuildContext context, WidgetRef ref, Tag tag) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: theme.colorScheme.surface,
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+          title: Text(
+            'タグを削除',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Divider(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '「${tag.name}」を削除しますか？\n過去の記録からは削除されません。',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'キャンセル',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            TextButton(
+              onPressed: () {
+                ref.read(tagProvider.notifier).deleteTag(tag.id);
+                Navigator.pop(context);
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('削除'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// 色選択パレット（2行×4列）
+class _ColorPalette extends StatelessWidget {
+  const _ColorPalette({
+    required this.colors,
+    required this.selectedColor,
+    required this.onSelected,
+  });
+
+  final List<String> colors;
+  final String selectedColor;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: colors.map((hex) {
+        final color = tagColorFromHex(hex);
+        final isSelected = hex == selectedColor;
+        return GestureDetector(
+          onTap: () => onSelected(hex),
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+              border: isSelected
+                  ? Border.all(color: Colors.white, width: 2)
+                  : null,
+              boxShadow: isSelected
+                  ? [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 6)]
+                  : null,
+            ),
+            child: isSelected
+                ? const Icon(Icons.check, color: Colors.white, size: 18)
+                : null,
+          ),
+        );
+      }).toList(),
     );
   }
 }

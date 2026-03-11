@@ -64,6 +64,8 @@ class _MoodSelectorState extends State<MoodSelector>
 
   @override
   Widget build(BuildContext context) {
+    final hasSelection = widget.selectedLevel != null;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: List.generate(AppConstants.moodLevelMax, (index) {
@@ -82,41 +84,69 @@ class _MoodSelectorState extends State<MoodSelector>
           },
           child: GestureDetector(
             onTap: () => _onTap(level),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected
-                        ? color.withValues(alpha: 0.2)
-                        : Colors.transparent,
-                    border: Border.all(
-                      color: isSelected ? color : Colors.grey.shade300,
-                      width: isSelected ? 2.5 : 1.5,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: hasSelection && !isSelected ? 0.5 : 1.0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isSelected
+                              ? color.withValues(alpha: 0.15)
+                              : Colors.transparent,
+                          border: Border.all(
+                            color: isSelected ? color : Colors.grey.shade300,
+                            width: isSelected ? 2.5 : 1.5,
+                          ),
+                        ),
+                        child: Center(
+                          child: MoodWaveIcon(
+                            level: level,
+                            size: 36,
+                            showShadow: false,
+                          ),
+                        ),
+                      ),
+                      if (isSelected)
+                        Positioned(
+                          top: -2,
+                          right: -2,
+                          child: Container(
+                            width: 18,
+                            height: 18,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 1.5),
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              size: 10,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isSelected ? color : Colors.grey,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
-                  child: Center(
-                    child: MoodWaveIcon(
-                      level: level,
-                      size: 36,
-                      showShadow: false,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isSelected ? color : Colors.grey,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

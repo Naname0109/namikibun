@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -64,6 +65,13 @@ class _AppWithSplashState extends ConsumerState<_AppWithSplash> {
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: themeMode,
+          locale: const Locale('ja', 'JP'),
+          supportedLocales: const [Locale('ja', 'JP')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           home: SplashScreen(onComplete: _onSplashComplete),
         );
       case _AppState.passcode:
@@ -72,6 +80,13 @@ class _AppWithSplashState extends ConsumerState<_AppWithSplash> {
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: themeMode,
+          locale: const Locale('ja', 'JP'),
+          supportedLocales: const [Locale('ja', 'JP')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           home: PasscodeScreen(
             onUnlocked: () {
               if (mounted) setState(() => _state = _AppState.main);
