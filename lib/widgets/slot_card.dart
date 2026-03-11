@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
+import 'package:namikibun/constants/design_tokens.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/models/slot.dart';
+import 'package:namikibun/widgets/mood_wave_icon.dart';
 
 class SlotCard extends StatelessWidget {
   const SlotCard({
@@ -33,21 +35,15 @@ class SlotCard extends StatelessWidget {
         height: 160,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          color: theme.colorScheme.surface.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusM),
           border: Border.all(
             color: hasRecord
                 ? AppConstants.moodColors[record!.moodLevel]!
                     .withValues(alpha: 0.5)
-                : Colors.grey.shade300,
+                : theme.colorScheme.outline.withValues(alpha: 0.15),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: DesignTokens.softShadow,
         ),
         child: hasRecord ? _buildRecordedContent(theme) : _buildEmptyContent(theme),
       ),
@@ -55,7 +51,6 @@ class SlotCard extends StatelessWidget {
   }
 
   Widget _buildRecordedContent(ThemeData theme) {
-    final emoji = AppConstants.moodEmojis[record!.moodLevel]!;
     final color = AppConstants.moodColors[record!.moodLevel]!;
 
     return Column(
@@ -75,7 +70,7 @@ class SlotCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            Text(emoji, style: const TextStyle(fontSize: 24)),
+            MoodWaveIcon(level: record!.moodLevel, size: 28),
           ],
         ),
         const SizedBox(height: 8),

@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
+import 'package:namikibun/constants/design_tokens.dart';
 import 'package:namikibun/providers/stats_provider.dart';
 import 'package:namikibun/utils/date_utils.dart';
 import 'package:namikibun/widgets/ad_banner.dart';
 import 'package:namikibun/widgets/empty_state.dart';
+import 'package:namikibun/widgets/mood_wave_icon.dart';
 
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
@@ -175,8 +177,9 @@ class _SlotAverageBarChart extends StatelessWidget {
       height: 200,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
+        color: theme.colorScheme.surface.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusM),
+        boxShadow: DesignTokens.softShadow,
       ),
       child: BarChart(
         BarChartData(
@@ -195,10 +198,7 @@ class _SlotAverageBarChart extends StatelessWidget {
                 getTitlesWidget: (value, _) {
                   final level = value.toInt();
                   if (level < 1 || level > 5) return const SizedBox.shrink();
-                  return Text(
-                    AppConstants.moodEmojis[level]!,
-                    style: const TextStyle(fontSize: 12),
-                  );
+                  return MoodWaveIconMini(level: level, size: 12);
                 },
               ),
             ),
@@ -268,8 +268,9 @@ class _DailyTrendLineChart extends StatelessWidget {
       height: 200,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
+        color: theme.colorScheme.surface.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusM),
+        boxShadow: DesignTokens.softShadow,
       ),
       child: LineChart(
         LineChartData(
@@ -288,10 +289,7 @@ class _DailyTrendLineChart extends StatelessWidget {
                 getTitlesWidget: (value, _) {
                   final level = value.toInt();
                   if (level < 1 || level > 5) return const SizedBox.shrink();
-                  return Text(
-                    AppConstants.moodEmojis[level]!,
-                    style: const TextStyle(fontSize: 12),
-                  );
+                  return MoodWaveIconMini(level: level, size: 12);
                 },
               ),
             ),
@@ -363,7 +361,7 @@ class _HighlightCards extends StatelessWidget {
           Expanded(
             child: _HighlightCard(
               label: '最高の日',
-              emoji: AppConstants.moodEmojis[stats.bestRecord!.moodLevel]!,
+              moodLevel: stats.bestRecord!.moodLevel,
               date: _formatHighlightDate(stats.bestRecord!.date),
               memo: stats.bestRecord!.memo,
               color: AppConstants.moodColors[stats.bestRecord!.moodLevel]!,
@@ -375,7 +373,7 @@ class _HighlightCards extends StatelessWidget {
           Expanded(
             child: _HighlightCard(
               label: '最低の日',
-              emoji: AppConstants.moodEmojis[stats.worstRecord!.moodLevel]!,
+              moodLevel: stats.worstRecord!.moodLevel,
               date: _formatHighlightDate(stats.worstRecord!.date),
               memo: stats.worstRecord!.memo,
               color: AppConstants.moodColors[stats.worstRecord!.moodLevel]!,
@@ -394,14 +392,14 @@ class _HighlightCards extends StatelessWidget {
 class _HighlightCard extends StatelessWidget {
   const _HighlightCard({
     required this.label,
-    required this.emoji,
+    required this.moodLevel,
     required this.date,
     this.memo,
     required this.color,
   });
 
   final String label;
-  final String emoji;
+  final int moodLevel;
   final String date;
   final String? memo;
   final Color color;
@@ -413,7 +411,7 @@ class _HighlightCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
@@ -428,7 +426,7 @@ class _HighlightCard extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 24)),
+              MoodWaveIcon(level: moodLevel, size: 28),
               const SizedBox(width: 8),
               Text(
                 date,

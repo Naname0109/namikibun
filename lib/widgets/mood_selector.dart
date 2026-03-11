@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
+import 'package:namikibun/widgets/mood_wave_icon.dart';
 
 class MoodSelector extends StatefulWidget {
   const MoodSelector({
@@ -68,7 +69,6 @@ class _MoodSelectorState extends State<MoodSelector>
       children: List.generate(AppConstants.moodLevelMax, (index) {
         final level = index + 1;
         final isSelected = widget.selectedLevel == level;
-        final emoji = AppConstants.moodEmojis[level]!;
         final label = AppConstants.moodLabels[level]!;
         final color = AppConstants.moodColors[level]!;
 
@@ -99,9 +99,10 @@ class _MoodSelectorState extends State<MoodSelector>
                     ),
                   ),
                   child: Center(
-                    child: Text(
-                      emoji,
-                      style: const TextStyle(fontSize: 28),
+                    child: MoodWaveIcon(
+                      level: level,
+                      size: 36,
+                      showShadow: false,
                     ),
                   ),
                 ),

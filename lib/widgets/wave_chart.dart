@@ -2,8 +2,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
+import 'package:namikibun/constants/design_tokens.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/models/slot.dart';
+import 'package:namikibun/widgets/mood_wave_icon.dart';
 
 class WaveChart extends StatefulWidget {
   const WaveChart({
@@ -80,12 +82,13 @@ class _WaveChartState extends State<WaveChart> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.fromLTRB(8, 24, 16, 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surface.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusM),
+        boxShadow: DesignTokens.softShadow,
       ),
       child: LineChart(
         LineChartData(
-          minY: 0.5,
+          minY: 0,
           maxY: 5.5,
           minX: -0.5,
           maxX: widget.slots.length - 0.5,
@@ -102,10 +105,7 @@ class _WaveChartState extends State<WaveChart> {
                 getTitlesWidget: (value, _) {
                   final level = value.toInt();
                   if (level < 1 || level > 5) return const SizedBox.shrink();
-                  return Text(
-                    AppConstants.moodEmojis[level]!,
-                    style: const TextStyle(fontSize: 14),
-                  );
+                  return MoodWaveIconMini(level: level, size: 14);
                 },
               ),
             ),
@@ -138,7 +138,7 @@ class _WaveChartState extends State<WaveChart> {
                 return touchedSpots.map((spot) {
                   final level = spot.y.toInt();
                   return LineTooltipItem(
-                    '${AppConstants.moodEmojis[level]} ${AppConstants.moodLabels[level]}',
+                    AppConstants.moodLabels[level] ?? '',
                     TextStyle(
                       color: AppConstants.moodColors[level],
                       fontWeight: FontWeight.bold,
@@ -220,7 +220,12 @@ class _WaveChartState extends State<WaveChart> {
       belowBarData: BarAreaData(
         show: true,
         gradient: LinearGradient(
-          colors: gradientColors.map((c) => c.withValues(alpha: 0.15)).toList(),
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            gradientColors.first.withValues(alpha: 0.3),
+            gradientColors.last.withValues(alpha: 0.02),
+          ],
         ),
       ),
     );

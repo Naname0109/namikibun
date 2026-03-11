@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
+import 'package:namikibun/constants/design_tokens.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/models/slot.dart';
 import 'package:namikibun/providers/mood_provider.dart';
@@ -20,7 +22,9 @@ Future<void> showRecordBottomSheet(
     isScrollControlled: true,
     useSafeArea: true,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(DesignTokens.radiusL),
+      ),
     ),
     builder: (context) => RecordBottomSheet(
       slot: slot,
@@ -107,6 +111,8 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
       }
 
       if (mounted) {
+        // Hapticフィードバック
+        HapticFeedback.lightImpact();
         showParticleEffect(context, _saveButtonKey);
         await Future.delayed(const Duration(milliseconds: 400));
         if (mounted) Navigator.pop(context);
@@ -124,7 +130,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
       padding: EdgeInsets.only(
         left: 24,
         right: 24,
-        top: 16,
+        top: 12,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       child: Column(
@@ -137,12 +143,12 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           // ヘッダー
           Text(
@@ -155,6 +161,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
           MoodSelector(
             selectedLevel: _selectedMoodLevel,
             onSelected: (level) {
+              HapticFeedback.selectionClick();
               setState(() => _selectedMoodLevel = level);
             },
           ),
@@ -164,10 +171,12 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
           TextField(
             controller: _memoController,
             maxLength: AppConstants.memoMaxLength,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: '会議が長かった',
               labelText: 'ひとことメモ',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -183,6 +192,9 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
               return FilterChip(
                 label: Text(tag),
                 selected: isSelected,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 onSelected: (selected) {
                   setState(() {
                     if (selected) {
@@ -205,6 +217,12 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
               onPressed: _selectedMoodLevel != null && !_isSaving
                   ? _save
                   : null,
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusM),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
               child: _isSaving
                   ? const SizedBox(
                       width: 20,

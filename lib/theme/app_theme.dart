@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:namikibun/constants/design_tokens.dart';
+
 class AppTheme {
   AppTheme._();
 
@@ -12,13 +14,20 @@ class AppTheme {
           brightness: Brightness.light,
           surface: const Color(0xFFFFFFFF),
         ),
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+        scaffoldBackgroundColor: Colors.transparent,
         useMaterial3: true,
         cardTheme: CardThemeData(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusM),
           ),
-          elevation: 1,
+          elevation: 0,
+        ),
+        bottomSheetTheme: const BottomSheetThemeData(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(DesignTokens.radiusL),
+            ),
+          ),
         ),
       );
 
@@ -28,12 +37,20 @@ class AppTheme {
           seedColor: _primaryColor,
           brightness: Brightness.dark,
         ),
+        scaffoldBackgroundColor: Colors.transparent,
         useMaterial3: true,
         cardTheme: CardThemeData(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusM),
           ),
-          elevation: 1,
+          elevation: 0,
+        ),
+        bottomSheetTheme: const BottomSheetThemeData(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(DesignTokens.radiusL),
+            ),
+          ),
         ),
       );
 }

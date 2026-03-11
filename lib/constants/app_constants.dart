@@ -14,15 +14,6 @@ class AppConstants {
   // メモの最大文字数
   static const int memoMaxLength = 50;
 
-  // 気分レベルに対応する絵文字
-  static const Map<int, String> moodEmojis = {
-    1: '😢',
-    2: '😔',
-    3: '😐',
-    4: '😊',
-    5: '✨',
-  };
-
   // 気分レベルに対応するラベル
   static const Map<int, String> moodLabels = {
     1: 'とても悪い',
