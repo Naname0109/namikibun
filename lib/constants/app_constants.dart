@@ -83,7 +83,40 @@ class AppConstants {
   // 広告関連
   static const String adBannerUnitIdAndroid = 'ca-app-pub-3940256099942544/6300978111'; // テスト用
   static const String adBannerUnitIdIos = 'ca-app-pub-3940256099942544/2934735716'; // テスト用
+  static const String rewardedAdUnitIdAndroid = 'ca-app-pub-3940256099942544/5224354917'; // テスト用
+  static const String rewardedAdUnitIdIos = 'ca-app-pub-3940256099942544/1712485313'; // テスト用
 
-  // 課金関連
-  static const String removeAdsProductId = 'remove_ads';
+  // 課金関連 - Product IDs（サブスクモデル）
+  static const String premiumMonthlyProductId = 'namikibun_premium_monthly';
+  static const String premiumYearlyProductId = 'namikibun_premium_yearly';
+  static const String removeAdsProductId = 'namikibun_remove_ads';
+
+  static const Set<String> allProductIds = {
+    premiumMonthlyProductId,
+    premiumYearlyProductId,
+    removeAdsProductId,
+  };
+
+  static const Set<String> subscriptionProductIds = {
+    premiumMonthlyProductId,
+    premiumYearlyProductId,
+  };
+
+  // 旧Product IDs（移行判定用）
+  static const String legacyRemoveAdsProductId = 'remove_ads';
+  static const Set<String> legacyProductIds = {
+    'namikibun_slot_expansion',
+    'namikibun_photo_memo',
+    'namikibun_privacy_lock',
+    'namikibun_stats_plus',
+    'namikibun_all_in_one',
+  };
+
+  // 無料スロット上限
+  static const int freeSlotLimit = 3;
+
+  // リワード動画アンロック時間（24時間）
+  static const Duration rewardedAdUnlockDuration = Duration(hours: 24);
 }
+
+/// 商品情報モデル（表示用）- 廃止（ストア画面で直接定義）

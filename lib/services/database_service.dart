@@ -364,6 +364,46 @@ class DatabaseService {
     return count;
   }
 
+  // --- 統計プラス用クエリ ---
+
+  /// 指定月の曜日別平均気分を取得
+  Future<Map<int, double>> getWeekdayAverages(String startDate, String endDate) async {
+    final db = await database;
+    final records = await db.query(
+      'mood_records',
+      columns: ['date', 'mood_level'],
+      where: 'date >= ? AND date <= ?',
+      whereArgs: [startDate, endDate],
+    );
+
+    final sums = <int, int>{};
+    final counts = <int, int>{};
+    for (final r in records) {
+      final date = DateTime.parse(r['date'] as String);
+      final weekday = date.weekday; // 1=月 ~ 7=日
+      sums[weekday] = (sums[weekday] ?? 0) + (r['mood_level'] as int);
+      counts[weekday] = (counts[weekday] ?? 0) + 1;
+    }
+
+    final averages = <int, double>{};
+    for (final day in sums.keys) {
+      averages[day] = sums[day]! / counts[day]!;
+    }
+    return averages;
+  }
+
+  /// 前月の平均気分を取得
+  Future<double?> getMonthAverage(String startDate, String endDate) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT AVG(mood_level) as avg_mood FROM mood_records WHERE date >= ? AND date <= ?',
+      [startDate, endDate],
+    );
+    final avg = result.first['avg_mood'];
+    if (avg == null) return null;
+    return (avg as num).toDouble();
+  }
+
   // --- Map変換ヘルパー ---
 
   Map<String, dynamic> _moodRecordToMap(MoodRecord record) {

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:namikibun/app.dart';
 import 'package:namikibun/providers/theme_provider.dart';
+import 'package:namikibun/screens/onboarding_screen.dart';
 import 'package:namikibun/screens/passcode_screen.dart';
 import 'package:namikibun/screens/splash_screen.dart';
 import 'package:namikibun/services/ad_service.dart';
@@ -37,13 +38,29 @@ class _AppWithSplash extends ConsumerStatefulWidget {
   ConsumerState<_AppWithSplash> createState() => _AppWithSplashState();
 }
 
-enum _AppState { splash, passcode, main }
+enum _AppState { splash, onboarding, passcode, main }
 
 class _AppWithSplashState extends ConsumerState<_AppWithSplash> {
   _AppState _state = _AppState.splash;
 
   void _onSplashComplete() {
     if (!mounted) return;
+    final prefs = ref.read(sharedPreferencesProvider);
+    final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
+
+    if (!onboardingCompleted) {
+      setState(() => _state = _AppState.onboarding);
+    } else {
+      _checkPasscode();
+    }
+  }
+
+  void _onOnboardingComplete() {
+    if (!mounted) return;
+    _checkPasscode();
+  }
+
+  void _checkPasscode() {
     final prefs = ref.read(sharedPreferencesProvider);
     final passcodeEnabled = prefs.getBool('passcode_enabled') ?? false;
 
@@ -54,40 +71,42 @@ class _AppWithSplashState extends ConsumerState<_AppWithSplash> {
     }
   }
 
+  Widget _buildPreMainApp(ThemeMode themeMode, Widget home) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeMode,
+      locale: const Locale('ja', 'JP'),
+      supportedLocales: const [Locale('ja', 'JP')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: home,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
 
     switch (_state) {
       case _AppState.splash:
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: themeMode,
-          locale: const Locale('ja', 'JP'),
-          supportedLocales: const [Locale('ja', 'JP')],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          home: SplashScreen(onComplete: _onSplashComplete),
+        return _buildPreMainApp(
+          themeMode,
+          SplashScreen(onComplete: _onSplashComplete),
+        );
+      case _AppState.onboarding:
+        return _buildPreMainApp(
+          themeMode,
+          OnboardingScreen(onComplete: _onOnboardingComplete),
         );
       case _AppState.passcode:
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: themeMode,
-          locale: const Locale('ja', 'JP'),
-          supportedLocales: const [Locale('ja', 'JP')],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          home: PasscodeScreen(
+        return _buildPreMainApp(
+          themeMode,
+          PasscodeScreen(
             onUnlocked: () {
               if (mounted) setState(() => _state = _AppState.main);
             },

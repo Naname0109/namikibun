@@ -27,7 +27,6 @@ class _WaveChartState extends State<WaveChart> {
   @override
   void initState() {
     super.initState();
-    // 初回描画アニメーション用: 少し遅延してからデータを表示
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) setState(() => _showData = true);
     });
@@ -88,8 +87,8 @@ class _WaveChartState extends State<WaveChart> {
       ),
       child: LineChart(
         LineChartData(
-          minY: 0,
-          maxY: 5.5,
+          minY: 1.0,
+          maxY: 5.0,
           minX: -0.5,
           maxX: widget.slots.length - 0.5,
           gridData: const FlGridData(show: false),
@@ -100,12 +99,38 @@ class _WaveChartState extends State<WaveChart> {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 32,
-                interval: 1,
+                reservedSize: 50,
+                interval: 4,
                 getTitlesWidget: (value, _) {
-                  final level = value.toInt();
-                  if (level < 1 || level > 5) return const SizedBox.shrink();
-                  return MoodWaveIconMini(level: level, size: 14);
+                  if ((value - 5).abs() < 0.01) {
+                    return SizedBox(
+                      width: 48,
+                      height: 24,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          MoodWaveIconMini(level: 5, size: 14),
+                          const SizedBox(width: 2),
+                          Text('良い', style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                        ],
+                      ),
+                    );
+                  }
+                  if ((value - 1).abs() < 0.01) {
+                    return SizedBox(
+                      width: 48,
+                      height: 24,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          MoodWaveIconMini(level: 1, size: 14),
+                          const SizedBox(width: 2),
+                          Text('悪い', style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                        ],
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
                 },
               ),
             ),
@@ -113,8 +138,10 @@ class _WaveChartState extends State<WaveChart> {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 28,
+                interval: 1,
                 getTitlesWidget: (value, _) {
-                  final index = value.toInt();
+                  final index = value.round();
+                  if ((value - index).abs() > 0.01) return const SizedBox.shrink();
                   if (index < 0 || index >= widget.slots.length) {
                     return const SizedBox.shrink();
                   }
@@ -176,7 +203,7 @@ class _WaveChartState extends State<WaveChart> {
       );
     }
 
-    // 色のグラデーション（各ポイントの気分レベルに基づく）
+    // 色のグラデーション
     final colors = spots
         .map((s) => AppConstants.moodColors[s.y.toInt()]!)
         .toList();

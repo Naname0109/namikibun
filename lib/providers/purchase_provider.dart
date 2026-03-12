@@ -1,43 +1,94 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/services/purchase_service.dart';
 
-/// 広告除去の状態を管理するプロバイダー
-final isAdRemovedProvider =
-    NotifierProvider<IsAdRemovedNotifier, bool>(IsAdRemovedNotifier.new);
+/// 購入状態: { 'premium': bool, 'remove_ads': bool }
+final purchaseStateProvider =
+    NotifierProvider<PurchaseStateNotifier, Map<String, bool>>(
+        PurchaseStateNotifier.new);
 
-class IsAdRemovedNotifier extends Notifier<bool> {
+class PurchaseStateNotifier extends Notifier<Map<String, bool>> {
   @override
-  bool build() {
-    // 初期値はfalse、initializeで非同期に更新
+  Map<String, bool> build() {
     _initialize();
-    return false;
+    return {'premium': false, 'remove_ads': false};
   }
 
   Future<void> _initialize() async {
     final service = PurchaseService();
-    final removed = await service.isAdRemoved();
-    if (removed) {
-      state = true;
-    }
+    final states = await service.getAllPurchaseStates();
+    state = states;
 
-    // 購入状態変更時にstateを更新
-    service.onPurchaseUpdated = (isRemoved) {
-      state = isRemoved;
+    service.onPurchaseUpdated = (key, value) {
+      state = {...state, key: value};
     };
   }
 
-  void setAdRemoved(bool value) {
-    state = value;
+  bool get isPremium => state['premium'] ?? false;
+  bool get isAdFree =>
+      isPremium || (state['remove_ads'] ?? false);
+
+  bool get canUseUnlimitedSlots => isPremium;
+  bool get canAttachPhoto => isPremium;
+  bool get canUsePasscode => isPremium;
+  bool get canUseStatsPlus => isPremium;
+
+  Future<void> purchaseSubscription(String productId) async {
+    await PurchaseService().purchaseSubscription(productId);
   }
 
-  /// 広告除去を購入
   Future<void> purchaseRemoveAds() async {
-    await PurchaseService().purchaseRemoveAds();
+    await PurchaseService().purchaseNonConsumable(AppConstants.removeAdsProductId);
   }
 
-  /// 購入を復元
   Future<void> restorePurchases() async {
     await PurchaseService().restorePurchases();
   }
+
+  /// デバッグ用
+  void debugRefresh() {
+    _initialize();
+  }
 }
+
+// --- 便利Provider ---
+
+final isPremiumProvider = Provider<bool>((ref) {
+  final notifier = ref.watch(purchaseStateProvider.notifier);
+  ref.watch(purchaseStateProvider);
+  return notifier.isPremium;
+});
+
+final isAdFreeProvider = Provider<bool>((ref) {
+  final notifier = ref.watch(purchaseStateProvider.notifier);
+  ref.watch(purchaseStateProvider);
+  return notifier.isAdFree;
+});
+
+final canUseUnlimitedSlotsProvider = Provider<bool>((ref) {
+  final notifier = ref.watch(purchaseStateProvider.notifier);
+  ref.watch(purchaseStateProvider);
+  return notifier.canUseUnlimitedSlots;
+});
+
+final canAttachPhotoProvider = Provider<bool>((ref) {
+  final notifier = ref.watch(purchaseStateProvider.notifier);
+  ref.watch(purchaseStateProvider);
+  return notifier.canAttachPhoto;
+});
+
+final canUsePasscodeProvider = Provider<bool>((ref) {
+  final notifier = ref.watch(purchaseStateProvider.notifier);
+  ref.watch(purchaseStateProvider);
+  return notifier.canUsePasscode;
+});
+
+final canUseStatsPlusProvider = Provider<bool>((ref) {
+  final notifier = ref.watch(purchaseStateProvider.notifier);
+  ref.watch(purchaseStateProvider);
+  return notifier.canUseStatsPlus;
+});
+
+/// 後方互換
+final isAdRemovedProvider = isAdFreeProvider;

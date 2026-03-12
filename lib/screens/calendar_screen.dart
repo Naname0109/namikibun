@@ -75,13 +75,28 @@ class CalendarScreen extends ConsumerWidget {
                 }
               },
               child: calendarAsync.when(
-                data: (recordsMap) => _CalendarBody(
-                  month: selectedMonth,
-                  recordsMap: recordsMap,
-                  onDayTapped: (date) {
-                    ref.read(selectedDateProvider.notifier).state = date;
-                    context.push('/home/day');
-                  },
+                data: (recordsMap) => Column(
+                  children: [
+                    Expanded(
+                      child: _CalendarBody(
+                        month: selectedMonth,
+                        recordsMap: recordsMap,
+                        onDayTapped: (date) {
+                          ref.read(selectedDateProvider.notifier).state = date;
+                          context.push('/home/day');
+                        },
+                      ),
+                    ),
+                    // 今日の気分サマリーカード
+                    _TodaySummaryCard(
+                      recordsMap: recordsMap,
+                      onTap: () {
+                        ref.read(selectedDateProvider.notifier).state =
+                            AppDateUtils.getLogicalToday();
+                        context.push('/home/day');
+                      },
+                    ),
+                  ],
                 ),
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
@@ -253,7 +268,7 @@ class _BackgroundWavePainter extends CustomPainter {
     fillPath.close();
 
     // 気分色グラデーション（上=ミントグリーン(高気分)、下=コーラル(低気分)）
-    final baseAlpha = brightness == Brightness.dark ? 0.18 : 0.15;
+    final baseAlpha = brightness == Brightness.dark ? 0.10 : 0.08;
     final fillPaint = Paint()
       ..shader = ui.Gradient.linear(
         const Offset(0, 0),
@@ -273,8 +288,8 @@ class _BackgroundWavePainter extends CustomPainter {
         const Offset(0, 0),
         Offset(0, size.height),
         [
-          const Color(0xFF4ECDC4).withValues(alpha: 0.45),
-          const Color(0xFFE76F51).withValues(alpha: 0.35),
+          const Color(0xFF4ECDC4).withValues(alpha: 0.25),
+          const Color(0xFFE76F51).withValues(alpha: 0.20),
         ],
       )
       ..strokeWidth = 3
@@ -400,9 +415,13 @@ class _MonthHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          IconButton(
-            onPressed: onPrevious,
-            icon: const Icon(Icons.chevron_left),
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: IconButton(
+              onPressed: onPrevious,
+              icon: const Icon(Icons.chevron_left),
+            ),
           ),
           Expanded(
             child: Text(
@@ -413,9 +432,13 @@ class _MonthHeader extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-          IconButton(
-            onPressed: canGoNext() ? onNext : null,
-            icon: const Icon(Icons.chevron_right),
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: IconButton(
+              onPressed: canGoNext() ? onNext : null,
+              icon: const Icon(Icons.chevron_right),
+            ),
           ),
         ],
       ),
@@ -563,7 +586,7 @@ class _CalendarDayCell extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
                 color: isFuture
-                    ? theme.colorScheme.onSurface.withValues(alpha: 0.3)
+                    ? theme.colorScheme.onSurface.withValues(alpha: 0.4)
                     : isToday
                         ? theme.colorScheme.primary
                         : null,
@@ -576,25 +599,104 @@ class _CalendarDayCell extends StatelessWidget {
                 level: avg!.round().clamp(1, 5),
                 size: 22,
               )
-            else if (!isFuture)
-              SizedBox(
-                width: 22,
-                height: 22,
-                child: Center(
-                  child: Container(
-                    width: 4,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
-                    ),
-                  ),
-                ),
-              )
             else
               const SizedBox(width: 22, height: 22),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 今日の気分サマリーカード
+class _TodaySummaryCard extends StatelessWidget {
+  const _TodaySummaryCard({
+    required this.recordsMap,
+    required this.onTap,
+  });
+
+  final Map<String, List<MoodRecord>> recordsMap;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final today = AppDateUtils.getLogicalToday();
+    final todayStr = AppDateUtils.formatDate(today);
+    final todayRecords = recordsMap[todayStr] ?? [];
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusM),
+          boxShadow: DesignTokens.softShadow,
+        ),
+        child: todayRecords.isNotEmpty
+            ? Row(
+                children: [
+                  MoodWaveIconMini(
+                    level: (todayRecords
+                                .map((r) => r.moodLevel)
+                                .reduce((a, b) => a + b) /
+                            todayRecords.length)
+                        .round()
+                        .clamp(1, 5),
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '今日の平均気分: ${(todayRecords.map((r) => r.moodLevel).reduce((a, b) => a + b) / todayRecords.length).toStringAsFixed(1)}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '${todayRecords.length}件の記録',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Icon(
+                    Icons.edit_note,
+                    color: theme.colorScheme.primary,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '今日の気分を記録しましょう',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                  ),
+                ],
+              ),
       ),
     );
   }

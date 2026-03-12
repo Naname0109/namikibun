@@ -33,6 +33,21 @@ class MonthlyStats {
   });
 }
 
+/// 統計プラス詳細分析モデル
+class DetailedStats {
+  final double? thisMonthAverage;
+  final double? lastMonthAverage;
+  final Map<String, double> tagCorrelations; // tag -> 全体平均との差分
+  final Map<int, double> weekdayPattern; // weekday(1-7) -> 平均気分
+
+  const DetailedStats({
+    this.thisMonthAverage,
+    this.lastMonthAverage,
+    this.tagCorrelations = const {},
+    this.weekdayPattern = const {},
+  });
+}
+
 /// 週間統計データモデル
 class WeeklyStats {
   final double thisWeekAverage;
@@ -194,5 +209,55 @@ final weeklyStatsProvider = FutureProvider<WeeklyStats>((ref) async {
     lastWeekAverage: lastWeekAvg,
     thisWeekRecordCount: thisWeekRecords.length,
     dailyAverages: dailyAverages,
+  );
+});
+
+/// 統計プラス詳細分析Provider
+final detailedStatsProvider = FutureProvider<DetailedStats>((ref) async {
+  final month = ref.watch(selectedStatsMonthProvider);
+  final db = DatabaseService();
+
+  // 今月の範囲
+  final thisStart = DateTime(month.year, month.month, 1);
+  final thisEnd = DateTime(month.year, month.month + 1, 0);
+  final thisStartStr = AppDateUtils.formatDate(thisStart);
+  final thisEndStr = AppDateUtils.formatDate(thisEnd);
+
+  // 先月の範囲
+  final lastStart = DateTime(month.year, month.month - 1, 1);
+  final lastEnd = DateTime(month.year, month.month, 0);
+  final lastStartStr = AppDateUtils.formatDate(lastStart);
+  final lastEndStr = AppDateUtils.formatDate(lastEnd);
+
+  // 月別比較
+  final thisMonthAvg = await db.getMonthAverage(thisStartStr, thisEndStr);
+  final lastMonthAvg = await db.getMonthAverage(lastStartStr, lastEndStr);
+
+  // 曜日別パターン
+  final weekdayPattern = await db.getWeekdayAverages(thisStartStr, thisEndStr);
+
+  // タグ相関（全体平均との差分）
+  final records = await db.getMoodRecordsByDateRange(thisStartStr, thisEndStr);
+  final overallAvg = thisMonthAvg ?? 3.0;
+
+  final tagMoodSums = <String, int>{};
+  final tagMoodCounts = <String, int>{};
+  for (final record in records) {
+    for (final tag in record.tags) {
+      tagMoodSums[tag] = (tagMoodSums[tag] ?? 0) + record.moodLevel;
+      tagMoodCounts[tag] = (tagMoodCounts[tag] ?? 0) + 1;
+    }
+  }
+  final tagCorrelations = <String, double>{};
+  for (final tag in tagMoodSums.keys) {
+    final tagAvg = tagMoodSums[tag]! / tagMoodCounts[tag]!;
+    tagCorrelations[tag] = tagAvg - overallAvg;
+  }
+
+  return DetailedStats(
+    thisMonthAverage: thisMonthAvg,
+    lastMonthAverage: lastMonthAvg,
+    tagCorrelations: tagCorrelations,
+    weekdayPattern: weekdayPattern,
   );
 });

@@ -1,17 +1,22 @@
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:namikibun/constants/design_tokens.dart';
 import 'package:namikibun/models/slot.dart';
 import 'package:namikibun/models/tag.dart';
 import 'package:namikibun/providers/purchase_provider.dart';
+import 'package:namikibun/providers/rewarded_ad_provider.dart';
 import 'package:namikibun/providers/slot_provider.dart';
 import 'package:namikibun/providers/tag_provider.dart';
 import 'package:namikibun/providers/theme_provider.dart';
 import 'package:namikibun/screens/passcode_screen.dart';
+import 'package:namikibun/services/feature_gate.dart';
 import 'package:namikibun/services/notification_service.dart';
 import 'package:namikibun/services/purchase_service.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
@@ -99,11 +104,9 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
-          // 広告除去
-          _sectionTitle(context, '広告除去'),
-          _SectionCard(
-            child: const _AdRemovalTile(),
-          ),
+          // ストア
+          _sectionTitle(context, 'ストア'),
+          const _StoreSection(),
           const SizedBox(height: 20),
 
           // その他
@@ -130,6 +133,13 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+
+          // 開発者オプション（デバッグモードのみ）
+          if (kDebugMode) ...[
+            const SizedBox(height: 20),
+            _sectionTitle(context, '開発者オプション'),
+            const _DebugMenu(),
+          ],
         ],
       ),
     );
@@ -141,7 +151,7 @@ class SettingsScreen extends ConsumerWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
             ),
@@ -276,11 +286,17 @@ class _SlotManagement extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       child: Row(
                         children: [
-                          // ドラッグハンドル
-                          Icon(
-                            Icons.drag_indicator,
-                            size: 20,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                          // ドラッグハンドル（48x48dpタップ領域）
+                          SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: Center(
+                              child: Icon(
+                                Icons.drag_indicator,
+                                size: 20,
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 10),
                           // 波ちゃんアイコン
@@ -301,7 +317,7 @@ class _SlotManagement extends ConsumerWidget {
                                   Text(
                                     '通知 ${slot.notifyTime}',
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                                       fontSize: 11,
                                     ),
                                   ),
@@ -311,10 +327,10 @@ class _SlotManagement extends ConsumerWidget {
                           // 編集ボタン
                           IconButton(
                             onPressed: () => _showRenameDialog(context, ref, slot),
-                            icon: const Icon(Icons.edit_outlined, size: 18),
+                            icon: const Icon(Icons.edit_outlined, size: 20),
                             tooltip: 'スロット名を変更',
                             style: IconButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                              backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
                               foregroundColor: theme.colorScheme.primary,
                               minimumSize: const Size(36, 36),
                               padding: EdgeInsets.zero,
@@ -328,10 +344,10 @@ class _SlotManagement extends ConsumerWidget {
                             const SizedBox(width: 8),
                             IconButton(
                               onPressed: () => _showDeleteDialog(context, ref, slot),
-                              icon: const Icon(Icons.delete_outline, size: 18),
+                              icon: const Icon(Icons.delete_outline, size: 20),
                               tooltip: 'スロットを削除',
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.red.withValues(alpha: 0.08),
+                                backgroundColor: Colors.red.withValues(alpha: 0.15),
                                 foregroundColor: Colors.red.shade400,
                                 minimumSize: const Size(36, 36),
                                 padding: EdgeInsets.zero,
@@ -525,6 +541,11 @@ class _SlotManagement extends ConsumerWidget {
   }
 
   void _showAddDialog(BuildContext context, WidgetRef ref) {
+    final gate = ref.read(featureGateProvider);
+    if (!gate.canAddSlot(slots.length)) {
+      context.push('/settings/store');
+      return;
+    }
     final controller = TextEditingController();
     showDialog(
       context: context,
@@ -1365,76 +1386,39 @@ class _ThemeOption extends StatelessWidget {
   }
 }
 
-// --- 広告除去 ---
+// --- ストアセクション ---
 
-class _AdRemovalTile extends ConsumerWidget {
-  const _AdRemovalTile();
+class _StoreSection extends ConsumerWidget {
+  const _StoreSection();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isAdRemoved = ref.watch(isAdRemovedProvider);
-    final product = PurchaseService().product;
     final theme = Theme.of(context);
+    final purchaseState = ref.watch(purchaseStateProvider);
+    final isPremium = purchaseState['premium'] ?? false;
 
-    if (isAdRemoved) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.check_circle, color: Colors.green, size: 24),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '広告除去済み',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.green,
-                    ),
-                  ),
-                  Text(
-                    'すべての広告が非表示になっています',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Row(
+    return _SectionCard(
+      child: InkWell(
+        onTap: () => context.push('/settings/store'),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusM),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary.withValues(alpha: 0.15),
-                      theme.colorScheme.tertiary.withValues(alpha: 0.15),
-                    ],
-                  ),
+                  color: isPremium
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.workspace_premium, color: theme.colorScheme.primary, size: 24),
+                child: Icon(
+                  isPremium ? Icons.workspace_premium : Icons.store,
+                  color: isPremium ? Colors.green : theme.colorScheme.primary,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1442,50 +1426,224 @@ class _AdRemovalTile extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '広告を除去',
+                      isPremium ? 'プレミアム会員' : 'プレミアムに登録',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
-                      product != null ? product.price : '読み込み中...',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+                      isPremium
+                          ? 'すべての機能が利用可能です'
+                          : '広告非表示・スロット無制限・詳細分析',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isPremium
+                            ? Colors.green
+                            : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        fontWeight: isPremium ? FontWeight.w600 : FontWeight.normal,
                       ),
                     ),
                   ],
                 ),
               ),
-              FilledButton(
-                onPressed: product != null
-                    ? () => ref.read(isAdRemovedProvider.notifier).purchaseRemoveAds()
-                    : null,
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              if (isPremium)
+                const Icon(Icons.check_circle, color: Colors.green, size: 20)
+              else
+                Icon(
+                  Icons.chevron_right,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                 ),
-                child: const Text('購入'),
-              ),
             ],
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: () => ref.read(isAdRemovedProvider.notifier).restorePurchases(),
-              child: Text(
-                '購入を復元',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
+      ),
+    );
+  }
+}
+
+// --- デバッグメニュー ---
+
+class _DebugMenu extends ConsumerWidget {
+  const _DebugMenu();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final purchaseState = ref.watch(purchaseStateProvider);
+    final debugOverride = ref.watch(debugFeatureOverrideProvider);
+    final isPremium = purchaseState['premium'] ?? false;
+    final isAdFree = purchaseState['remove_ads'] ?? false;
+    final rewardedState = ref.watch(rewardedAdProvider);
+
+    return _SectionCard(
+      child: Column(
+        children: [
+          // デバッグモード無効化トグル
+          _debugToggle(
+            theme: theme,
+            icon: Icons.bug_report,
+            label: 'デバッグモード無効化',
+            subtitle: 'リリース挙動テスト用',
+            value: debugOverride,
+            activeColor: Colors.orange,
+            onChanged: (v) =>
+                ref.read(debugFeatureOverrideProvider.notifier).state = v,
+          ),
+          _debugDivider(theme),
+          // プレミアム状態トグル
+          _debugToggle(
+            theme: theme,
+            icon: Icons.workspace_premium,
+            label: 'プレミアム状態',
+            subtitle: isPremium ? 'アクティブ' : '非アクティブ',
+            value: isPremium,
+            activeColor: Colors.green,
+            onChanged: (v) {
+              PurchaseService().debugSetPremium(v);
+              ref.read(purchaseStateProvider.notifier).debugRefresh();
+            },
+          ),
+          _debugDivider(theme),
+          // 広告除去状態トグル
+          _debugToggle(
+            theme: theme,
+            icon: Icons.block,
+            label: '広告除去状態',
+            subtitle: isAdFree ? '購入済み' : '未購入',
+            value: isAdFree,
+            activeColor: Colors.green,
+            onChanged: (v) {
+              PurchaseService().debugSetAdFree(v);
+              ref.read(purchaseStateProvider.notifier).debugRefresh();
+            },
+          ),
+          _debugDivider(theme),
+          // 動画アンロック状態トグル
+          _debugToggle(
+            theme: theme,
+            icon: Icons.play_circle_outline,
+            label: '動画アンロック状態',
+            subtitle: rewardedState.isUnlocked ? 'アンロック中' : 'ロック中',
+            value: rewardedState.isUnlocked,
+            activeColor: Colors.blue,
+            onChanged: (v) {
+              if (v) {
+                ref.read(rewardedAdProvider.notifier).onRewardEarned();
+              } else {
+                ref.read(rewardedAdProvider.notifier).debugResetTimestamp();
+              }
+            },
+          ),
+          _debugDivider(theme),
+          // リセットボタン群
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.remove('first_launch_date');
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('初回起動日をリセットしました')),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.restart_alt, size: 16),
+                        label: const Text('初回起動日リセット', style: TextStyle(fontSize: 11)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          ref.read(rewardedAdProvider.notifier).debugResetTimestamp();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('動画タイムスタンプをリセットしました')),
+                          );
+                        },
+                        icon: const Icon(Icons.videocam_off, size: 16),
+                        label: const Text('動画リセット', style: TextStyle(fontSize: 11)),
+                        style: OutlinedButton.styleFrom(foregroundColor: Colors.orange),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.remove('onboarding_completed');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('オンボーディングをリセットしました')),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.school, size: 16),
+                    label: const Text('オンボーディングリセット', style: TextStyle(fontSize: 11)),
+                    style: OutlinedButton.styleFrom(foregroundColor: Colors.purple),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _debugToggle({
+    required ThemeData theme,
+    required IconData icon,
+    required String label,
+    required String subtitle,
+    required bool value,
+    required Color activeColor,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Icon(icon, size: 20,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: theme.textTheme.bodyMedium),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            activeTrackColor: activeColor,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _debugDivider(ThemeData theme) {
+    return Divider(
+      height: 1,
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+      indent: 16,
+      endIndent: 16,
     );
   }
 }
@@ -1596,6 +1754,13 @@ class _PasscodeSettingState extends ConsumerState<_PasscodeSetting> {
             activeTrackColor: theme.colorScheme.primary,
             onChanged: (enabled) async {
               if (enabled) {
+                final gate = ref.read(featureGateProvider);
+                if (!gate.canUsePasscode) {
+                  if (context.mounted) {
+                    context.push('/settings/store');
+                  }
+                  return;
+                }
                 final success = await showPasscodeSetupDialog(context);
                 if (success) {
                   setState(() => _isEnabled = true);

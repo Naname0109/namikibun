@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-import 'package:namikibun/providers/purchase_provider.dart';
 import 'package:namikibun/services/ad_service.dart';
+import 'package:namikibun/services/feature_gate.dart';
 
 class AdBanner extends ConsumerStatefulWidget {
   const AdBanner({super.key});
@@ -15,11 +15,22 @@ class AdBanner extends ConsumerStatefulWidget {
 class _AdBannerState extends ConsumerState<AdBanner> {
   BannerAd? _bannerAd;
   bool _isLoaded = false;
+  bool _disposed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(featureGateProvider, (prev, next) {
+      if (next.isAdFree && _bannerAd != null) {
+        _disposeAd();
+      }
+    });
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_bannerAd == null) {
+    if (_bannerAd == null && !_disposed) {
       _loadAd();
     }
   }
@@ -47,6 +58,13 @@ class _AdBannerState extends ConsumerState<AdBanner> {
     )..load();
   }
 
+  void _disposeAd() {
+    _bannerAd?.dispose();
+    _bannerAd = null;
+    _disposed = true;
+    if (mounted) setState(() => _isLoaded = false);
+  }
+
   @override
   void dispose() {
     _bannerAd?.dispose();
@@ -55,17 +73,9 @@ class _AdBannerState extends ConsumerState<AdBanner> {
 
   @override
   Widget build(BuildContext context) {
-    final isAdRemoved = ref.watch(isAdRemovedProvider);
+    final gate = ref.watch(featureGateProvider);
 
-    if (isAdRemoved) {
-      // 広告除去後はバナーを破棄
-      _bannerAd?.dispose();
-      _bannerAd = null;
-      _isLoaded = false;
-      return const SizedBox.shrink();
-    }
-
-    if (!_isLoaded || _bannerAd == null) {
+    if (gate.isAdFree || !_isLoaded || _bannerAd == null) {
       return const SizedBox.shrink();
     }
 

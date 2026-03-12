@@ -9,6 +9,7 @@ import 'package:namikibun/screens/calendar_screen.dart';
 import 'package:namikibun/screens/day_detail_screen.dart';
 import 'package:namikibun/screens/stats_screen.dart';
 import 'package:namikibun/screens/settings_screen.dart';
+import 'package:namikibun/screens/store_screen.dart';
 import 'package:namikibun/theme/app_theme.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -53,6 +54,28 @@ final goRouter = GoRouter(
           ],
         ),
       ],
+    ),
+    // ストア画面
+    GoRoute(
+      path: '/settings/store',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const StoreScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          );
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.1),
+              end: Offset.zero,
+            ).animate(curved),
+            child: FadeTransition(opacity: curved, child: child),
+          );
+        },
+      ),
     ),
     // 日別記録画面（ボトムナビ非表示、pushで遷移）
     GoRoute(

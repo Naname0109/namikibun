@@ -13,8 +13,10 @@ import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/models/slot.dart';
 import 'package:namikibun/providers/mood_provider.dart';
 import 'package:namikibun/providers/tag_provider.dart';
+import 'package:namikibun/services/feature_gate.dart';
 import 'package:namikibun/widgets/mood_selector.dart';
 import 'package:namikibun/widgets/particle_effect.dart';
+import 'package:go_router/go_router.dart';
 
 /// 記録入力ボトムシートを表示する
 Future<void> showRecordBottomSheet(
@@ -230,11 +232,11 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
           hintText: '会議が長かった',
           hintStyle: TextStyle(
             fontStyle: FontStyle.italic,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
           ),
           labelText: 'ひとことメモ',
           labelStyle: TextStyle(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
           border: InputBorder.none,
           filled: true,
@@ -309,6 +311,49 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
   }
 
   Widget _buildPhotoSection(ThemeData theme) {
+    final gate = ref.read(featureGateProvider);
+    if (!gate.canAttachPhoto && _photoPath == null) {
+      return GestureDetector(
+        onTap: () {
+          final nav = GoRouter.of(context);
+          Navigator.pop(context);
+          nav.push('/settings/store');
+        },
+        child: CustomPaint(
+          painter: _DashedBorderPainter(
+            color: theme.colorScheme.outline.withValues(alpha: 0.3),
+            borderRadius: 16,
+          ),
+          child: Container(
+            height: 64,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.lock_outline,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '写真を追加（プレミアム）',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     if (_photoPath != null) {
       return Stack(
         children: [

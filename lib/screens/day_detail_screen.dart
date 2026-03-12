@@ -195,11 +195,11 @@ class _SlotList extends ConsumerWidget {
         // + 記録を追加ボタン
         Padding(
           padding: const EdgeInsets.only(top: 4, bottom: 8),
-          child: OutlinedButton.icon(
+          child: FilledButton.tonalIcon(
             onPressed: () => _showSlotPicker(context, ref, dateString),
             icon: const Icon(Icons.add, size: 18),
             label: const Text('記録を追加'),
-            style: OutlinedButton.styleFrom(
+            style: FilledButton.styleFrom(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusM),
               ),
@@ -207,7 +207,44 @@ class _SlotList extends ConsumerWidget {
             ),
           ),
         ),
+        // 下部メッセージ
+        if (records.isEmpty)
+          _buildBottomMessage(
+            context,
+            '🌊 タップして今日の気分を記録しましょう',
+            showSleepingIcon: true,
+          )
+        else if (records.length == 1)
+          _buildBottomMessage(
+            context,
+            'もう1つ記録してみましょう',
+          ),
       ],
+    );
+  }
+
+  Widget _buildBottomMessage(BuildContext context, String message, {bool showSleepingIcon = false}) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 16),
+      child: Center(
+        child: Column(
+          children: [
+            if (showSleepingIcon)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: MoodWaveIcon(level: 3, size: 36),
+              ),
+            Text(
+              message,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -290,9 +327,10 @@ class _PremiumSlotCard extends StatefulWidget {
 }
 
 class _PremiumSlotCardState extends State<_PremiumSlotCard>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _wobbleController;
   late Animation<double> _wobbleAnimation;
+  double _scale = 1.0;
 
   @override
   void initState() {
@@ -337,8 +375,14 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
 
     return GestureDetector(
       onTap: widget.onTap,
+      onTapDown: (_) => setState(() => _scale = 0.95),
+      onTapUp: (_) => setState(() => _scale = 1.0),
+      onTapCancel: () => setState(() => _scale = 1.0),
       onLongPress: hasRecord ? () => _showContextMenu(context) : null,
-      child: Container(
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
         height: 80,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(DesignTokens.radiusM),
@@ -350,12 +394,27 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
         clipBehavior: Clip.antiAlias,
         child: Row(
           children: [
-            // 左端カラーライン
+            // 左端カラーライン + レベル表示
             Container(
               width: 4,
               color: hasRecord ? color : color.withValues(alpha: 0.2),
             ),
-            const SizedBox(width: 12),
+            if (hasRecord)
+              Container(
+                width: 28,
+                alignment: Alignment.center,
+                child: Text(
+                  'Lv.$moodLevel',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: color.withValues(alpha: 0.8),
+                  ),
+                ),
+              )
+            else
+              const SizedBox(width: 8),
+            const SizedBox(width: 4),
             // 波キャラアイコン
             if (hasRecord)
               AnimatedBuilder(
@@ -378,7 +437,7 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
                 height: 48,
                 child: Icon(
                   Icons.add_circle_outline,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   size: 28,
                 ),
               ),
@@ -436,7 +495,7 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
                           : 'タップして記録',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(
-                          alpha: hasRecord ? 0.6 : 0.4,
+                          alpha: hasRecord ? 0.7 : 0.6,
                         ),
                       ),
                       maxLines: 1,
@@ -466,11 +525,12 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
                     )
                   : Icon(
                       Icons.chevron_right,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
             ),
           ],
         ),
+      ),
       ),
     );
   }
