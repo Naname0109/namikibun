@@ -81,10 +81,10 @@ class AppConstants {
   ];
 
   // 広告関連
-  static const String adBannerUnitIdAndroid = 'ca-app-pub-3940256099942544/6300978111'; // テスト用
-  static const String adBannerUnitIdIos = 'ca-app-pub-3940256099942544/2934735716'; // テスト用
-  static const String rewardedAdUnitIdAndroid = 'ca-app-pub-3940256099942544/5224354917'; // テスト用
-  static const String rewardedAdUnitIdIos = 'ca-app-pub-3940256099942544/1712485313'; // テスト用
+  static const String adBannerUnitIdAndroid = 'ca-app-pub-2099665494657429/4390211966';
+  static const String adBannerUnitIdIos = 'ca-app-pub-2099665494657429/1808280656';
+  static const String rewardedAdUnitIdAndroid = 'ca-app-pub-2099665494657429/1676748283';
+  static const String rewardedAdUnitIdIos = 'ca-app-pub-2099665494657429/2035365575';
 
   // 課金関連 - Product IDs（サブスクモデル）
   static const String premiumMonthlyProductId = 'namikibun_premium_monthly';
