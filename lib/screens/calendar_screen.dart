@@ -12,6 +12,7 @@ import 'package:namikibun/providers/mood_provider.dart';
 import 'package:namikibun/providers/slot_provider.dart';
 import 'package:namikibun/services/feature_gate.dart';
 import 'package:namikibun/utils/date_utils.dart';
+import 'package:namikibun/widgets/ad_banner.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
 
 /// スロットのテーマカラーパレット（order_index順）
@@ -146,6 +147,9 @@ class CalendarScreen extends ConsumerWidget {
               ),
             ),
           ),
+
+          // バナー広告
+          const AdBanner(),
         ],
       ),
     );

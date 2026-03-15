@@ -21,6 +21,7 @@ import 'package:namikibun/screens/passcode_screen.dart';
 import 'package:namikibun/services/feature_gate.dart';
 import 'package:namikibun/services/notification_service.dart';
 import 'package:namikibun/services/purchase_service.dart';
+import 'package:namikibun/widgets/ad_banner.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -33,9 +34,12 @@ class SettingsScreen extends ConsumerWidget {
     final tagsAsync = ref.watch(tagProvider);
 
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      child: Column(
         children: [
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+              children: [
           Text(
             l10n.settings,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -150,8 +154,13 @@ class SettingsScreen extends ConsumerWidget {
             _sectionTitle(context, l10n.debugOptions),
             const _DebugMenu(),
           ],
-        ],
-      ),
+            ],
+          ),
+        ),
+
+        // バナー広告
+        const AdBanner(),
+      ]),
     );
   }
 
