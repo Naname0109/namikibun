@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'dart:ui';
 
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
+import 'package:namikibun/providers/locale_provider.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/models/slot.dart';
 import 'package:namikibun/models/tag.dart';
@@ -81,8 +82,8 @@ class DatabaseService {
       'CREATE INDEX idx_mood_records_slot_id ON mood_records(slot_id)',
     );
 
-    // 端末言語に応じてデフォルトデータを選択
-    final isJapanese = _isJapaneseLocale();
+    // アプリの言語設定に応じてデフォルトデータを選択
+    final isJapanese = await _isJapaneseLocale();
     final slots = isJapanese ? AppConstants.defaultSlots : AppConstants.defaultSlotsEn;
 
     // デフォルトスロットの挿入
@@ -121,14 +122,17 @@ class DatabaseService {
     }
   }
 
-  /// 端末の言語が日本語かどうかを判定
-  static bool _isJapaneseLocale() {
-    final locale = PlatformDispatcher.instance.locale;
-    return locale.languageCode == 'ja';
+  /// アプリの言語設定が日本語かどうかを判定
+  /// SharedPreferences の app_locale を参照、未設定なら日本語
+  static Future<bool> _isJapaneseLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(localePrefsKey);
+    if (saved == null) return true; // 未設定 = 日本語
+    return saved == 'ja';
   }
 
   Future<void> _insertDefaultTags(Database db) async {
-    final isJapanese = _isJapaneseLocale();
+    final isJapanese = await _isJapaneseLocale();
     final defaultTagData = isJapanese
         ? const [
             {'name': '仕事', 'colorHex': 'FF4A90D9'},

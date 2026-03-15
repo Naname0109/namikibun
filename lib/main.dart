@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:namikibun/app.dart';
 import 'package:namikibun/l10n/app_localizations.dart';
+import 'package:namikibun/providers/locale_provider.dart';
 import 'package:namikibun/providers/theme_provider.dart';
 import 'package:namikibun/screens/onboarding_screen.dart';
 import 'package:namikibun/screens/passcode_screen.dart';
@@ -71,12 +72,13 @@ class _AppWithSplashState extends ConsumerState<_AppWithSplash> {
     }
   }
 
-  Widget _buildPreMainApp(ThemeMode themeMode, Widget home) {
+  Widget _buildPreMainApp(ThemeMode themeMode, Locale locale, Widget home) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
+      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: home,
@@ -86,21 +88,25 @@ class _AppWithSplashState extends ConsumerState<_AppWithSplash> {
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
 
     switch (_state) {
       case _AppState.splash:
         return _buildPreMainApp(
           themeMode,
+          locale,
           SplashScreen(onComplete: _onSplashComplete),
         );
       case _AppState.onboarding:
         return _buildPreMainApp(
           themeMode,
+          locale,
           OnboardingScreen(onComplete: _onOnboardingComplete),
         );
       case _AppState.passcode:
         return _buildPreMainApp(
           themeMode,
+          locale,
           PasscodeScreen(
             onUnlocked: () {
               if (mounted) setState(() => _state = _AppState.main);

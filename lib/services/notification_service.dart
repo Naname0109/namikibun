@@ -1,7 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:namikibun/providers/locale_provider.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -94,9 +94,12 @@ class NotificationService {
     return hash;
   }
 
-  /// 端末の言語が日本語かどうかを判定
-  static bool _isJapanese() {
-    return PlatformDispatcher.instance.locale.languageCode == 'ja';
+  /// アプリの言語設定が日本語かどうかを判定
+  static Future<bool> _isJapanese() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(localePrefsKey);
+    if (saved == null) return true; // 未設定 = 日本語
+    return saved == 'ja';
   }
 
   /// スロットのリマインダーをスケジュール
@@ -112,7 +115,7 @@ class NotificationService {
 
     final notificationId = _notificationIdForSlot(slot.id);
 
-    final isJa = _isJapanese();
+    final isJa = await _isJapanese();
     final title = isJa ? '波きぶん' : 'Namikibun';
     final body = isJa
         ? '${slot.name}の気分を記録しましょう'

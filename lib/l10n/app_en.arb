@@ -209,6 +209,10 @@
   "notificationChannelName": "Mood Reminder",
   "notificationChannelDesc": "Mood recording reminder notifications",
 
+  "language": "Language",
+  "languageJapanese": "日本語",
+  "languageEnglish": "English",
+
   "slotFilterAll": "All",
   "moodByTimeSlot": "Mood by time slot",
   "slotFilterPremiumDesc": "Select a slot to view mood by time",

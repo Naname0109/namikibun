@@ -614,6 +614,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get notificationChannelDesc => '気分記録のリマインダー通知';
 
   @override
+  String get language => '言語';
+
+  @override
+  String get languageJapanese => '日本語';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
   String get slotFilterAll => '全体';
 
   @override

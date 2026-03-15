@@ -292,6 +292,10 @@
   "notificationChannelName": "気分リマインダー",
   "notificationChannelDesc": "気分記録のリマインダー通知",
 
+  "language": "言語",
+  "languageJapanese": "日本語",
+  "languageEnglish": "English",
+
   "slotFilterAll": "全体",
   "moodByTimeSlot": "スロット別気分表示",
   "slotFilterPremiumDesc": "スロットを選択して時間帯ごとの気分を確認",

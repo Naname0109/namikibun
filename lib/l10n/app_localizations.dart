@@ -1244,6 +1244,24 @@ abstract class AppLocalizations {
   /// **'気分記録のリマインダー通知'**
   String get notificationChannelDesc;
 
+  /// No description provided for @language.
+  ///
+  /// In ja, this message translates to:
+  /// **'言語'**
+  String get language;
+
+  /// No description provided for @languageJapanese.
+  ///
+  /// In ja, this message translates to:
+  /// **'日本語'**
+  String get languageJapanese;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In ja, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
   /// No description provided for @slotFilterAll.
   ///
   /// In ja, this message translates to:

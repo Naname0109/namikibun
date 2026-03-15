@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:namikibun/constants/design_tokens.dart';
 import 'package:namikibun/l10n/app_localizations.dart';
+import 'package:namikibun/providers/locale_provider.dart';
 import 'package:namikibun/providers/theme_provider.dart';
 import 'package:namikibun/screens/calendar_screen.dart';
 import 'package:namikibun/screens/day_detail_screen.dart';
@@ -157,6 +158,7 @@ class NamikibunApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
       title: 'Namikibun',
@@ -165,6 +167,7 @@ class NamikibunApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
       routerConfig: goRouter,
+      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
     );

@@ -15,6 +15,7 @@ import 'package:namikibun/providers/purchase_provider.dart';
 import 'package:namikibun/providers/rewarded_ad_provider.dart';
 import 'package:namikibun/providers/slot_provider.dart';
 import 'package:namikibun/providers/tag_provider.dart';
+import 'package:namikibun/providers/locale_provider.dart';
 import 'package:namikibun/providers/theme_provider.dart';
 import 'package:namikibun/screens/passcode_screen.dart';
 import 'package:namikibun/services/feature_gate.dart';
@@ -96,6 +97,13 @@ class SettingsScreen extends ConsumerWidget {
           _sectionTitle(context, l10n.theme),
           _SectionCard(
             child: const _ThemeSelector(),
+          ),
+          const SizedBox(height: 20),
+
+          // 言語
+          _sectionTitle(context, l10n.language),
+          _SectionCard(
+            child: const _LanguageSelector(),
           ),
           const SizedBox(height: 20),
 
@@ -1363,6 +1371,124 @@ class _ThemeOption extends StatelessWidget {
                     ),
                   ),
                   // チェックマーク
+                  if (isSelected)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: theme.colorScheme.primary,
+                        ),
+                        child: const Icon(Icons.check, size: 12, color: Colors.white),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- 言語セレクター ---
+
+class _LanguageSelector extends ConsumerWidget {
+  const _LanguageSelector();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final currentLocale = ref.watch(localeProvider);
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          _LanguageOption(
+            label: l10n.languageJapanese,
+            iconText: 'あ',
+            isSelected: currentLocale.languageCode == 'ja',
+            onTap: () => ref.read(localeProvider.notifier).setLocale(const Locale('ja')),
+          ),
+          const SizedBox(width: 12),
+          _LanguageOption(
+            label: l10n.languageEnglish,
+            iconText: 'A',
+            isSelected: currentLocale.languageCode == 'en',
+            onTap: () => ref.read(localeProvider.notifier).setLocale(const Locale('en')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LanguageOption extends StatelessWidget {
+  const _LanguageOption({
+    required this.label,
+    required this.iconText,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final String iconText;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 60,
+              height: 80,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.outline.withValues(alpha: 0.2),
+                  width: isSelected ? 2.5 : 1,
+                ),
+                color: isSelected
+                    ? theme.colorScheme.primary.withValues(alpha: 0.08)
+                    : theme.colorScheme.surface,
+              ),
+              child: Stack(
+                children: [
+                  Center(
+                    child: Text(
+                      iconText,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ),
                   if (isSelected)
                     Positioned(
                       top: 4,

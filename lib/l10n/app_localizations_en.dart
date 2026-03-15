@@ -620,6 +620,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationChannelDesc => 'Mood recording reminder notifications';
 
   @override
+  String get language => 'Language';
+
+  @override
+  String get languageJapanese => '日本語';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
   String get slotFilterAll => 'All';
 
   @override
