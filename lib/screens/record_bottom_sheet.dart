@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/constants/design_tokens.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/models/slot.dart';
 import 'package:namikibun/providers/mood_provider.dart';
@@ -214,7 +215,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
     );
   }
 
-  Widget _buildMemoField(ThemeData theme) {
+  Widget _buildMemoField(ThemeData theme, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
@@ -229,12 +230,12 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
           );
         },
         decoration: InputDecoration(
-          hintText: '会議が長かった',
+          hintText: l10n.memoHint,
           hintStyle: TextStyle(
             fontStyle: FontStyle.italic,
             color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
           ),
-          labelText: 'ひとことメモ',
+          labelText: l10n.quickNote,
           labelStyle: TextStyle(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
@@ -251,7 +252,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
     );
   }
 
-  Widget _buildTagSelector(ThemeData theme) {
+  Widget _buildTagSelector(ThemeData theme, AppLocalizations l10n) {
     final tagsAsync = ref.watch(tagProvider);
     return tagsAsync.when(
       data: (tags) => Wrap(
@@ -306,11 +307,11 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
         height: 36,
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, _) => const Text('タグの読み込みに失敗しました'),
+      error: (_, _) => Text(l10n.tagLoadFailed),
     );
   }
 
-  Widget _buildPhotoSection(ThemeData theme) {
+  Widget _buildPhotoSection(ThemeData theme, AppLocalizations l10n) {
     final gate = ref.read(featureGateProvider);
     if (!gate.canAttachPhoto && _photoPath == null) {
       return GestureDetector(
@@ -340,7 +341,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '写真を追加（プレミアム）',
+                    l10n.addPhotoPremium,
                     style: TextStyle(
                       fontSize: 13,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
@@ -413,7 +414,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '写真を追加',
+                  l10n.addPhoto,
                   style: TextStyle(
                     fontSize: 13,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
@@ -427,7 +428,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
     );
   }
 
-  Widget _buildSaveButton(ThemeData theme) {
+  Widget _buildSaveButton(ThemeData theme, AppLocalizations l10n) {
     final moodColor = _moodColor();
     final isEnabled = _selectedMoodLevel != null && !_isSaving;
 
@@ -467,7 +468,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
                   ),
                 )
               : Text(
-                  isEditing ? '更新' : '保存',
+                  isEditing ? l10n.update : l10n.save,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -484,6 +485,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -512,7 +514,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
 
           // ヘッダー
           Text(
-            '${widget.slot.name}の気分',
+            l10n.slotMood(widget.slot.name),
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
@@ -520,7 +522,7 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            '今の気分を選んでください',
+            l10n.chooseMood,
             style: TextStyle(
               fontSize: 12,
               color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
@@ -533,13 +535,13 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
           const SizedBox(height: 20),
 
           // メモ入力
-          _buildMemoField(theme),
+          _buildMemoField(theme, l10n),
           const SizedBox(height: 20),
 
           // タグ選択
           _buildSectionLabel(
             theme,
-            'タグ',
+            l10n.tags,
             trailing: _selectedTags.isNotEmpty
                 ? Text(
                     '(${_selectedTags.length})',
@@ -550,13 +552,13 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
                   )
                 : null,
           ),
-          _buildTagSelector(theme),
+          _buildTagSelector(theme, l10n),
           const SizedBox(height: 20),
 
           // 写真
           _buildSectionLabel(
             theme,
-            '写真',
+            l10n.photo,
             trailing: _photoPath != null
                 ? Icon(
                     Icons.check_circle,
@@ -565,11 +567,11 @@ class _RecordBottomSheetState extends ConsumerState<RecordBottomSheet> {
                   )
                 : null,
           ),
-          _buildPhotoSection(theme),
+          _buildPhotoSection(theme, l10n),
           const SizedBox(height: 16),
 
             // 保存ボタン
-            _buildSaveButton(theme),
+            _buildSaveButton(theme, l10n),
           ],
         ),
       ),

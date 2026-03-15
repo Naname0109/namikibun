@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/constants/design_tokens.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/providers/stats_provider.dart';
 import 'package:namikibun/providers/tag_provider.dart';
+import 'package:namikibun/utils/date_utils.dart';
 
 class DetailedStatsSection extends ConsumerWidget {
   const DetailedStatsSection({super.key});
@@ -54,6 +56,7 @@ class _MonthComparisonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final thisAvg = stats.thisMonthAverage!;
     final lastAvg = stats.lastMonthAverage!;
     final diff = thisAvg - lastAvg;
@@ -69,7 +72,7 @@ class _MonthComparisonCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '月別比較',
+            l10n.monthlyComparison,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -79,7 +82,7 @@ class _MonthComparisonCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _MonthBar(
-                  label: '先月',
+                  label: l10n.lastMonth,
                   average: lastAvg,
                   color: theme.colorScheme.outline.withValues(alpha: 0.5),
                 ),
@@ -87,7 +90,7 @@ class _MonthComparisonCard extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: _MonthBar(
-                  label: '今月',
+                  label: l10n.thisMonth,
                   average: thisAvg,
                   color: AppConstants.moodColors[thisAvg.round().clamp(1, 5)]!,
                 ),
@@ -106,8 +109,8 @@ class _MonthComparisonCard extends StatelessWidget {
               ),
               child: Text(
                 diff >= 0
-                    ? '先月より +${diff.toStringAsFixed(1)} 改善'
-                    : '先月より ${diff.toStringAsFixed(1)} 低下',
+                    ? l10n.improvedFromLastMonth(diff.toStringAsFixed(1))
+                    : l10n.declinedFromLastMonth(diff.toStringAsFixed(1)),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -186,6 +189,7 @@ class _TagCorrelationInsights extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final tagsAsync = ref.watch(tagProvider);
     final tagColorMap = <String, Color>{};
     if (tagsAsync.hasValue) {
@@ -209,7 +213,7 @@ class _TagCorrelationInsights extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'タグ相関インサイト',
+            l10n.tagCorrelationInsights,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -235,7 +239,7 @@ class _TagCorrelationInsights extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '「${entry.key}」タグの日は平均気分が${isPositive ? '+' : ''}${diff.toStringAsFixed(1)}',
+                      l10n.tagDaysMoodHigher(entry.key, isPositive ? '+' : '', diff.toStringAsFixed(1)),
                       style: TextStyle(
                         fontSize: 13,
                         color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
@@ -263,19 +267,11 @@ class _WeekdayPatternChart extends StatelessWidget {
 
   final Map<int, double> pattern;
 
-  static const _weekdayLabels = {
-    1: '月',
-    2: '火',
-    3: '水',
-    4: '木',
-    5: '金',
-    6: '土',
-    7: '日',
-  };
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final weekdayLabels = AppDateUtils.weekdays(l10n);
 
     return Container(
       height: 200,
@@ -289,7 +285,7 @@ class _WeekdayPatternChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '曜日別パターン',
+            l10n.dayOfWeekPattern,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -313,7 +309,7 @@ class _WeekdayPatternChart extends StatelessWidget {
                       getTitlesWidget: (value, _) {
                         final day = value.toInt() + 1;
                         return Text(
-                          _weekdayLabels[day] ?? '',
+                          day >= 1 && day <= 7 ? weekdayLabels[day - 1] : '',
                           style: TextStyle(
                             fontSize: 11,
                             color: (day == 6 || day == 7)

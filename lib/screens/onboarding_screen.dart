@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -34,6 +35,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: SafeArea(
@@ -44,10 +46,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 controller: _pageController,
                 onPageChanged: (page) => setState(() => _currentPage = page),
                 children: [
-                  _buildPage1(theme),
-                  _buildPage2(theme),
-                  _buildPage3(theme),
-                  _buildPage4(theme),
+                  _buildPage1(theme, l10n),
+                  _buildPage2(theme, l10n),
+                  _buildPage3(theme, l10n),
+                  _buildPage4(theme, l10n),
                 ],
               ),
             ),
@@ -79,7 +81,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildPage1(ThemeData theme) {
+  Widget _buildPage1(ThemeData theme, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Column(
@@ -88,7 +90,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           MoodWaveIcon(level: 5, size: 120),
           const SizedBox(height: 32),
           Text(
-            'ようこそ波きぶんへ',
+            l10n.welcomeToNamikibun,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -96,7 +98,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            '毎日の気分を波のように記録して\n自分の心の動きを見つめましょう',
+            l10n.onboardingDesc1,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
@@ -107,14 +109,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildPage2(ThemeData theme) {
+  Widget _buildPage2(ThemeData theme, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            '気分を5段階で記録',
+            l10n.recordMoodIn5Levels,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -134,7 +136,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   SizedBox(
                     width: 100,
                     child: Text(
-                      AppConstants.moodLabels[level]!,
+                      AppConstants.localizedMoodLabels(l10n)[level]!,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -159,7 +161,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildPage3(ThemeData theme) {
+  Widget _buildPage3(ThemeData theme, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Column(
@@ -172,7 +174,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 32),
           Text(
-            'カレンダーで振り返り',
+            l10n.reviewOnCalendar,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -180,7 +182,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            '月間の気分の波をカレンダーで確認\n統計やグラフで傾向を分析できます',
+            l10n.onboardingDesc3,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
@@ -191,7 +193,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildPage4(ThemeData theme) {
+  Widget _buildPage4(ThemeData theme, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Column(
@@ -200,7 +202,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           MoodWaveIcon(level: 4, size: 80),
           const SizedBox(height: 32),
           Text(
-            'さっそく始めましょう',
+            l10n.letsGetStarted,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -208,7 +210,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            '朝・昼・夜の3つの時間帯で\n気分を記録してみましょう',
+            l10n.onboardingDesc4,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
@@ -225,9 +227,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   borderRadius: BorderRadius.circular(24),
                 ),
               ),
-              child: const Text(
-                '始める',
-                style: TextStyle(
+              child: Text(
+                l10n.getStarted,
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),

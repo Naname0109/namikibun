@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -92,6 +94,11 @@ class NotificationService {
     return hash;
   }
 
+  /// 端末の言語が日本語かどうかを判定
+  static bool _isJapanese() {
+    return PlatformDispatcher.instance.locale.languageCode == 'ja';
+  }
+
   /// スロットのリマインダーをスケジュール
   Future<void> scheduleSlotReminder(Slot slot) async {
     final notifyTime = slot.notifyTime;
@@ -105,20 +112,28 @@ class NotificationService {
 
     final notificationId = _notificationIdForSlot(slot.id);
 
+    final isJa = _isJapanese();
+    final title = isJa ? '波きぶん' : 'Namikibun';
+    final body = isJa
+        ? '${slot.name}の気分を記録しましょう'
+        : "Let's record your ${slot.name} mood";
+    final channelName = isJa ? '気分リマインダー' : 'Mood Reminder';
+    final channelDesc = isJa ? '気分記録のリマインダー通知' : 'Mood recording reminder notifications';
+
     await _plugin.zonedSchedule(
       notificationId,
-      '波きぶん',
-      '${slot.name}の気分を記録しましょう',
+      title,
+      body,
       _nextInstanceOfTime(hour, minute),
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'mood_reminder',
-          '気分リマインダー',
-          channelDescription: '気分記録のリマインダー通知',
+          channelName,
+          channelDescription: channelDesc,
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:

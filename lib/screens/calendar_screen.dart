@@ -6,10 +6,45 @@ import 'package:go_router/go_router.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/constants/design_tokens.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/providers/mood_provider.dart';
+import 'package:namikibun/providers/slot_provider.dart';
+import 'package:namikibun/services/feature_gate.dart';
 import 'package:namikibun/utils/date_utils.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
+
+/// スロットのテーマカラーパレット（order_index順）
+const _slotThemeColors = [
+  Color(0xFFFF9F43), // 朝 - ウォームアンバー
+  Color(0xFFFF6B6B), // 昼 - コーラルオレンジ
+  Color(0xFF6C5CE7), // 夜 - インディゴ
+  Color(0xFF00B894), // 4th - ティール
+  Color(0xFFE17055), // 5th - テラコッタ
+  Color(0xFF0984E3), // 6th - ブルー
+  Color(0xFFFD79A8), // 7th - ピンク
+  Color(0xFF636E72), // 8th - グレー
+];
+
+Color _slotColor(int orderIndex) {
+  return _slotThemeColors[orderIndex % _slotThemeColors.length];
+}
+
+/// スロットフィルターでレコードを絞り込むヘルパー
+Map<String, List<MoodRecord>> _filterRecordsBySlot(
+  Map<String, List<MoodRecord>> recordsMap,
+  String? slotFilter,
+) {
+  if (slotFilter == null) return recordsMap;
+  final filtered = <String, List<MoodRecord>>{};
+  for (final entry in recordsMap.entries) {
+    final slotRecords = entry.value.where((r) => r.slotId == slotFilter).toList();
+    if (slotRecords.isNotEmpty) {
+      filtered[entry.key] = slotRecords;
+    }
+  }
+  return filtered;
+}
 
 class CalendarScreen extends ConsumerWidget {
   const CalendarScreen({super.key});
@@ -19,6 +54,7 @@ class CalendarScreen extends ConsumerWidget {
     final selectedMonth = ref.watch(selectedMonthProvider);
     final calendarAsync = ref.watch(calendarRecordsProvider);
     final streakAsync = ref.watch(consecutiveRecordDaysProvider);
+    final slotFilter = ref.watch(selectedSlotFilterProvider);
 
     return SafeArea(
       child: Column(
@@ -54,6 +90,9 @@ class CalendarScreen extends ConsumerWidget {
             },
           ),
 
+          // スロットフィルターチップ
+          const _SlotFilterChips(),
+
           // 曜日ヘッダー
           const _WeekdayHeader(),
 
@@ -75,36 +114,254 @@ class CalendarScreen extends ConsumerWidget {
                 }
               },
               child: calendarAsync.when(
-                data: (recordsMap) => Column(
-                  children: [
-                    Expanded(
-                      child: _CalendarBody(
-                        month: selectedMonth,
+                data: (recordsMap) {
+                  final filteredMap = _filterRecordsBySlot(recordsMap, slotFilter);
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: _CalendarBody(
+                          month: selectedMonth,
+                          recordsMap: filteredMap,
+                          onDayTapped: (date) {
+                            ref.read(selectedDateProvider.notifier).state = date;
+                            context.push('/home/day');
+                          },
+                        ),
+                      ),
+                      // 今日の気分サマリーカード（常に全体表示）
+                      _TodaySummaryCard(
                         recordsMap: recordsMap,
-                        onDayTapped: (date) {
-                          ref.read(selectedDateProvider.notifier).state = date;
+                        onTap: () {
+                          ref.read(selectedDateProvider.notifier).state =
+                              AppDateUtils.getLogicalToday();
                           context.push('/home/day');
                         },
                       ),
-                    ),
-                    // 今日の気分サマリーカード
-                    _TodaySummaryCard(
-                      recordsMap: recordsMap,
-                      onTap: () {
-                        ref.read(selectedDateProvider.notifier).state =
-                            AppDateUtils.getLogicalToday();
-                        context.push('/home/day');
-                      },
-                    ),
-                  ],
-                ),
+                    ],
+                  );
+                },
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('エラー: $e')),
+                error: (e, _) => Center(child: Text('${AppLocalizations.of(context)!.error}: $e')),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// スロットフィルターチップ
+class _SlotFilterChips extends ConsumerWidget {
+  const _SlotFilterChips();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final slotsAsync = ref.watch(slotProvider);
+    final selectedFilter = ref.watch(selectedSlotFilterProvider);
+    final gate = ref.watch(featureGateProvider);
+    final l10n = AppLocalizations.of(context)!;
+
+    return slotsAsync.when(
+      data: (slots) {
+        // 削除済みスロットがフィルター中なら全体にリセット
+        if (selectedFilter != null && !slots.any((s) => s.id == selectedFilter)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(selectedSlotFilterProvider.notifier).state = null;
+          });
+        }
+
+        return SizedBox(
+          height: 40,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            children: [
+              // 「全体」チップ
+              _FilterChip(
+                label: l10n.slotFilterAll,
+                isSelected: selectedFilter == null,
+                color: null,
+                isLocked: false,
+                onTap: () {
+                  ref.read(selectedSlotFilterProvider.notifier).state = null;
+                },
+              ),
+              const SizedBox(width: 8),
+              // 各スロットのチップ
+              ...slots.map((slot) {
+                final isSelected = selectedFilter == slot.id;
+                final color = _slotColor(slot.orderIndex);
+                final isLocked = !gate.canUseSlotFilter;
+
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _FilterChip(
+                    label: slot.name,
+                    isSelected: isSelected,
+                    color: color,
+                    isLocked: isLocked,
+                    onTap: () {
+                      if (isLocked) {
+                        _showPremiumDialog(context);
+                      } else {
+                        ref.read(selectedSlotFilterProvider.notifier).state =
+                            isSelected ? null : slot.id;
+                      }
+                    },
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox(height: 40),
+      error: (_, _) => const SizedBox(height: 40),
+    );
+  }
+
+  void _showPremiumDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.workspace_premium, color: Color(0xFF4A90D9)),
+            const SizedBox(width: 8),
+            Text(l10n.moodByTimeSlot),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.slotFilterPremiumDesc),
+            const SizedBox(height: 8),
+            Text(
+              l10n.premiumOnlyFeature,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(dialogContext).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.push('/settings/store');
+            },
+            child: Text(l10n.openStore),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 個別のフィルターチップ
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.color,
+    required this.isLocked,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final Color? color; // null = 「全体」（グラデーション）
+  final bool isLocked;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurface.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // カラードット
+            if (color != null)
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : color,
+                  shape: BoxShape.circle,
+                ),
+              )
+            else
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: isSelected
+                        ? [Colors.white, Colors.white70]
+                        : [
+                            const Color(0xFF4ECDC4),
+                            const Color(0xFFFFD93D),
+                            const Color(0xFFE76F51),
+                          ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              ),
+            // ラベル
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected
+                    ? Colors.white
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+            // ロックアイコン
+            if (isLocked && !isSelected) ...[
+              const SizedBox(width: 4),
+              Icon(
+                Icons.lock_outline,
+                size: 12,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -274,9 +531,9 @@ class _BackgroundWavePainter extends CustomPainter {
         const Offset(0, 0),
         Offset(0, size.height),
         [
-          const Color(0xFF4ECDC4).withValues(alpha: baseAlpha),       // ミントグリーン（上=高気分）
-          const Color(0xFFFFD93D).withValues(alpha: baseAlpha * 0.5), // イエロー（中間）
-          const Color(0xFFE76F51).withValues(alpha: baseAlpha * 0.3), // コーラル（下=低気分）
+          const Color(0xFF4ECDC4).withValues(alpha: baseAlpha),
+          const Color(0xFFFFD93D).withValues(alpha: baseAlpha * 0.5),
+          const Color(0xFFE76F51).withValues(alpha: baseAlpha * 0.3),
         ],
         [0.0, 0.5, 1.0],
       );
@@ -360,6 +617,7 @@ class _StreakBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -383,7 +641,7 @@ class _StreakBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            '連続$days日記録中',
+            l10n.streakDays(days),
             style: theme.textTheme.labelLarge?.copyWith(
               color: theme.colorScheme.primary,
               fontWeight: FontWeight.bold,
@@ -411,6 +669,7 @@ class _MonthHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -425,7 +684,7 @@ class _MonthHeader extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              '${month.year}年${month.month}月',
+              l10n.monthYear(month.year, month.month),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -449,18 +708,19 @@ class _MonthHeader extends StatelessWidget {
 class _WeekdayHeader extends StatelessWidget {
   const _WeekdayHeader();
 
-  static const _weekdays = ['月', '火', '水', '木', '金', '土', '日'];
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final weekdays = AppDateUtils.weekdays(l10n);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
-        children: _weekdays.map((day) {
-          final color = day == '土'
+        children: List.generate(weekdays.length, (index) {
+          final day = weekdays[index];
+          final color = index == 5
               ? Colors.blue.shade400
-              : day == '日'
+              : index == 6
                   ? Colors.red.shade400
                   : theme.colorScheme.onSurface.withValues(alpha: 0.6);
           return Expanded(
@@ -474,7 +734,7 @@ class _WeekdayHeader extends StatelessWidget {
               ),
             ),
           );
-        }).toList(),
+        }),
       ),
     );
   }
@@ -621,6 +881,7 @@ class _TodaySummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final today = AppDateUtils.getLogicalToday();
     final todayStr = AppDateUtils.formatDate(today);
     final todayRecords = recordsMap[todayStr] ?? [];
@@ -653,13 +914,13 @@ class _TodaySummaryCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '今日の平均気分: ${(todayRecords.map((r) => r.moodLevel).reduce((a, b) => a + b) / todayRecords.length).toStringAsFixed(1)}',
+                          '${l10n.todayAverageMood}: ${(todayRecords.map((r) => r.moodLevel).reduce((a, b) => a + b) / todayRecords.length).toStringAsFixed(1)}',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
-                          '${todayRecords.length}件の記録',
+                          l10n.recordCount(todayRecords.length),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface
                                 .withValues(alpha: 0.6),
@@ -684,7 +945,7 @@ class _TodaySummaryCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '今日の気分を記録しましょう',
+                      l10n.todayRecordPrompt,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w500,

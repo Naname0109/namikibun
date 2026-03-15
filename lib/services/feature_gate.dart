@@ -65,6 +65,11 @@ class FeatureGate {
         rewardedAdState.isUnlocked;
   }
 
+  bool get canUseSlotFilter {
+    if (_isDebugUnlocked) return true;
+    return purchaseNotifier.isPremium;
+  }
+
   bool get canUseStatsPlus {
     if (_isDebugUnlocked) return true;
     return purchaseNotifier.isPremium;

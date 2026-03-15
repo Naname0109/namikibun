@@ -57,6 +57,9 @@ class MoodRecordsNotifier extends AsyncNotifier<List<MoodRecord>> {
   }
 }
 
+/// スロットフィルター（null = 全体、値あり = スロットID）
+final selectedSlotFilterProvider = StateProvider<String?>((ref) => null);
+
 /// カレンダー表示月
 final selectedMonthProvider = StateProvider<DateTime>((ref) {
   final now = AppDateUtils.getLogicalToday();

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,8 +33,13 @@ class AdService {
     }
   }
 
+  // テスト用広告ユニットID（iOS/Android共通）
+  static const _testBannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
+  static const _testRewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
+
   /// プラットフォーム別のバナー広告ユニットIDを取得
   String get bannerAdUnitId {
+    if (kDebugMode) return _testBannerAdUnitId;
     if (Platform.isAndroid) {
       return AppConstants.adBannerUnitIdAndroid;
     } else if (Platform.isIOS) {
@@ -44,6 +50,7 @@ class AdService {
 
   /// プラットフォーム別のリワード広告ユニットIDを取得
   String get rewardedAdUnitId {
+    if (kDebugMode) return _testRewardedAdUnitId;
     if (Platform.isAndroid) {
       return AppConstants.rewardedAdUnitIdAndroid;
     } else if (Platform.isIOS) {

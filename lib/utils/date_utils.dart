@@ -1,4 +1,5 @@
 import 'package:namikibun/constants/app_constants.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 
 /// 日付境界（午前4時）を考慮した日付ユーティリティ
 class AppDateUtils {
@@ -45,12 +46,21 @@ class AppDateUtils {
         logicalA.day == logicalB.day;
   }
 
-  static const _weekdays = ['月', '火', '水', '木', '金', '土', '日'];
+  /// ローカライズされた曜日名リスト（月〜日）
+  static List<String> weekdays(AppLocalizations l10n) => [
+    l10n.weekdayMon,
+    l10n.weekdayTue,
+    l10n.weekdayWed,
+    l10n.weekdayThu,
+    l10n.weekdayFri,
+    l10n.weekdaySat,
+    l10n.weekdaySun,
+  ];
 
-  /// 「3月10日 火曜日」形式の表示用文字列を返す
-  static String formatDisplayDate(DateTime date) {
-    final weekday = _weekdays[date.weekday - 1];
-    return '${date.month}月${date.day}日 $weekday曜日';
+  /// ローカライズされた表示用文字列を返す
+  static String formatDisplayDate(DateTime date, AppLocalizations l10n) {
+    final weekday = weekdays(l10n)[date.weekday - 1];
+    return l10n.displayDate(date.month, date.day, weekday);
   }
 
   /// DateTimeを yyyy-MM-dd 文字列に変換する（論理日付変換なし）

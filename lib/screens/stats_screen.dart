@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/constants/design_tokens.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/providers/stats_provider.dart';
 import 'package:namikibun/providers/tag_provider.dart';
 import 'package:namikibun/services/feature_gate.dart';
@@ -19,6 +20,7 @@ class StatsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final selectedMonth = ref.watch(selectedStatsMonthProvider);
     final statsAsync = ref.watch(monthlyStatsProvider);
 
@@ -52,15 +54,15 @@ class StatsScreen extends ConsumerWidget {
             child: statsAsync.when(
               data: (stats) {
                 if (stats.totalRecordDays < 3) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.bar_chart,
-                    message: '3日以上記録すると\n統計が表示されます',
+                    message: l10n.statsMinDays,
                   );
                 }
                 return _StatsContent(stats: stats);
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('エラー: $e')),
+              error: (e, _) => Center(child: Text('${l10n.error}: $e')),
             ),
           ),
 
@@ -87,6 +89,7 @@ class _StatsMonthHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -102,7 +105,7 @@ class _StatsMonthHeader extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              '${month.year}年${month.month}月',
+              l10n.monthYear(month.year, month.month),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -130,6 +133,7 @@ class _StatsContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final weeklyAsync = ref.watch(weeklyStatsProvider);
     final gate = ref.watch(featureGateProvider);
 
@@ -155,20 +159,20 @@ class _StatsContent extends ConsumerWidget {
         ),
 
         // 時間帯別平均気分（棒グラフ）
-        _SectionTitle(title: '時間帯別の平均気分'),
+        _SectionTitle(title: l10n.averageMoodByTime),
         const SizedBox(height: 8),
         _SlotAverageBarChart(stats: stats),
         const SizedBox(height: 20),
 
         // 月全体の気分推移（折れ線グラフ）
-        _SectionTitle(title: '月全体の気分推移'),
+        _SectionTitle(title: l10n.monthlyMoodTrend),
         const SizedBox(height: 8),
         _DailyTrendLineChart(dailyAverages: stats.dailyAverages),
         const SizedBox(height: 20),
 
         // タグ分析
         if (stats.tagCounts.isNotEmpty) ...[
-          _SectionTitle(title: 'タグ別平均気分'),
+          _SectionTitle(title: l10n.averageMoodByTag),
           const SizedBox(height: 8),
           if (gate.canViewTagAnalytics)
             _TagAnalyticsSection(stats: stats)
@@ -178,14 +182,14 @@ class _StatsContent extends ConsumerWidget {
         ],
 
         // 今月のハイライト
-        _SectionTitle(title: '今月のハイライト'),
+        _SectionTitle(title: l10n.thisMonthHighlights),
         const SizedBox(height: 8),
         _HighlightCards(stats: stats),
         const SizedBox(height: 20),
 
         // 詳細分析（統計プラス）
         if (gate.canUseStatsPlus) ...[
-          _SectionTitle(title: '詳細分析'),
+          _SectionTitle(title: l10n.detailedAnalytics),
           const SizedBox(height: 8),
           const DetailedStatsSection(),
         ] else ...[
@@ -220,11 +224,12 @@ class _SlotAverageBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final entries = stats.slotAverages.entries.toList();
 
     if (entries.isEmpty) {
-      return const SizedBox(height: 150, child: Center(child: Text('データなし')));
+      return SizedBox(height: 150, child: Center(child: Text(l10n.noData)));
     }
 
     return Container(
@@ -267,7 +272,7 @@ class _SlotAverageBarChart extends StatelessWidget {
                         children: [
                           MoodWaveIconMini(level: 5, size: 14),
                           const SizedBox(width: 2),
-                          Text('良い', style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                          Text(l10n.moodGood, style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         ],
                       ),
                     );
@@ -281,7 +286,7 @@ class _SlotAverageBarChart extends StatelessWidget {
                         children: [
                           MoodWaveIconMini(level: 1, size: 14),
                           const SizedBox(width: 2),
-                          Text('悪い', style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                          Text(l10n.moodBad, style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         ],
                       ),
                     );
@@ -339,12 +344,13 @@ class _DailyTrendLineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final sortedEntries = dailyAverages.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
 
     if (sortedEntries.isEmpty) {
-      return const SizedBox(height: 150, child: Center(child: Text('データなし')));
+      return SizedBox(height: 150, child: Center(child: Text(l10n.noData)));
     }
 
     final spots = <FlSpot>[];
@@ -392,7 +398,7 @@ class _DailyTrendLineChart extends StatelessWidget {
                         children: [
                           MoodWaveIconMini(level: 5, size: 14),
                           const SizedBox(width: 2),
-                          Text('良い', style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                          Text(l10n.moodGood, style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         ],
                       ),
                     );
@@ -406,7 +412,7 @@ class _DailyTrendLineChart extends StatelessWidget {
                         children: [
                           MoodWaveIconMini(level: 1, size: 14),
                           const SizedBox(width: 2),
-                          Text('悪い', style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                          Text(l10n.moodBad, style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         ],
                       ),
                     );
@@ -428,7 +434,7 @@ class _DailyTrendLineChart extends StatelessWidget {
                   final date = sortedEntries[index].key;
                   final day = date.split('-').last;
                   return Text(
-                    '${int.parse(day)}日',
+                    l10n.dayLabel(int.parse(day)),
                     style: TextStyle(
                       fontSize: 10,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -477,12 +483,13 @@ class _HighlightCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         if (stats.bestRecord != null)
           Expanded(
             child: _HighlightCard(
-              label: '最高の日',
+              label: l10n.bestDay,
               moodLevel: stats.bestRecord!.moodLevel,
               date: _formatHighlightDate(stats.bestRecord!.date),
               memo: stats.bestRecord!.memo,
@@ -494,7 +501,7 @@ class _HighlightCards extends StatelessWidget {
         if (stats.worstRecord != null)
           Expanded(
             child: _HighlightCard(
-              label: '最低の日',
+              label: l10n.worstDay,
               moodLevel: stats.worstRecord!.moodLevel,
               date: _formatHighlightDate(stats.worstRecord!.date),
               memo: stats.worstRecord!.memo,
@@ -581,6 +588,7 @@ class _WeeklySummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final avgLevel = weekly.thisWeekAverage.round().clamp(1, 5);
     final color = AppConstants.moodColors[avgLevel]!;
@@ -602,7 +610,7 @@ class _WeeklySummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '今週のサマリー',
+            l10n.weeklySummary,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -616,14 +624,14 @@ class _WeeklySummaryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '平均 ${weekly.thisWeekAverage.toStringAsFixed(1)}',
+                    l10n.average(weekly.thisWeekAverage.toStringAsFixed(1)),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: color,
                     ),
                   ),
                   Text(
-                    '${weekly.thisWeekRecordCount}件の記録',
+                    l10n.recordCount(weekly.thisWeekRecordCount),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:namikibun/constants/design_tokens.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/models/slot.dart';
 import 'package:namikibun/models/tag.dart';
 import 'package:namikibun/providers/purchase_provider.dart';
@@ -26,6 +27,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final slotsAsync = ref.watch(slotProvider);
     final tagsAsync = ref.watch(tagProvider);
 
@@ -34,7 +36,7 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           Text(
-            '設定',
+            l10n.settings,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -42,7 +44,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // スロット管理
-          _sectionTitle(context, 'スロット管理'),
+          _sectionTitle(context, l10n.slotManagement),
           slotsAsync.when(
             data: (slots) => _SlotManagement(slots: slots),
             loading: () => const _SectionCard(
@@ -54,14 +56,14 @@ class SettingsScreen extends ConsumerWidget {
             error: (e, _) => _SectionCard(
               child: Padding(
                 padding: EdgeInsets.all(16),
-                child: Center(child: Text('エラー: $e')),
+                child: Center(child: Text('${l10n.error}: $e')),
               ),
             ),
           ),
           const SizedBox(height: 20),
 
           // タグ管理
-          _sectionTitle(context, 'タグ管理'),
+          _sectionTitle(context, l10n.tagManagement),
           tagsAsync.when(
             data: (tags) => _TagManagement(tags: tags),
             loading: () => const _SectionCard(
@@ -73,14 +75,14 @@ class SettingsScreen extends ConsumerWidget {
             error: (e, _) => _SectionCard(
               child: Padding(
                 padding: EdgeInsets.all(16),
-                child: Center(child: Text('エラー: $e')),
+                child: Center(child: Text('${l10n.error}: $e')),
               ),
             ),
           ),
           const SizedBox(height: 20),
 
           // 通知設定
-          _sectionTitle(context, '通知設定'),
+          _sectionTitle(context, l10n.notifications),
           _SectionCard(
             child: slotsAsync.when(
               data: (slots) => _NotificationSettings(slots: slots),
@@ -91,32 +93,32 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 20),
 
           // テーマ
-          _sectionTitle(context, 'テーマ'),
+          _sectionTitle(context, l10n.theme),
           _SectionCard(
             child: const _ThemeSelector(),
           ),
           const SizedBox(height: 20),
 
           // セキュリティ
-          _sectionTitle(context, 'セキュリティ'),
+          _sectionTitle(context, l10n.security),
           _SectionCard(
             child: const _PasscodeSetting(),
           ),
           const SizedBox(height: 20),
 
           // ストア
-          _sectionTitle(context, 'ストア'),
+          _sectionTitle(context, l10n.store),
           const _StoreSection(),
           const SizedBox(height: 20),
 
           // その他
-          _sectionTitle(context, 'その他'),
+          _sectionTitle(context, l10n.other),
           _SectionCard(
             child: Column(
               children: [
                 _InfoRow(
                   icon: Icons.info_outline,
-                  label: 'バージョン',
+                  label: l10n.version,
                   value: '1.0.0',
                 ),
                 Divider(
@@ -127,8 +129,8 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 _InfoRow(
                   icon: Icons.privacy_tip_outlined,
-                  label: 'プライバシーポリシー',
-                  subtitle: 'データはすべて端末内に保存されます',
+                  label: l10n.privacyPolicy,
+                  subtitle: l10n.privacyPolicyDesc,
                 ),
               ],
             ),
@@ -137,7 +139,7 @@ class SettingsScreen extends ConsumerWidget {
           // 開発者オプション（デバッグモードのみ）
           if (kDebugMode) ...[
             const SizedBox(height: 20),
-            _sectionTitle(context, '開発者オプション'),
+            _sectionTitle(context, l10n.debugOptions),
             const _DebugMenu(),
           ],
         ],
@@ -245,6 +247,7 @@ class _SlotManagement extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,7 +318,7 @@ class _SlotManagement extends ConsumerWidget {
                                 ),
                                 if (slot.notifyTime != null)
                                   Text(
-                                    '通知 ${slot.notifyTime}',
+                                    l10n.notificationTime(slot.notifyTime!),
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                                       fontSize: 11,
@@ -328,7 +331,7 @@ class _SlotManagement extends ConsumerWidget {
                           IconButton(
                             onPressed: () => _showRenameDialog(context, ref, slot),
                             icon: const Icon(Icons.edit_outlined, size: 20),
-                            tooltip: 'スロット名を変更',
+                            tooltip: l10n.renameSlot,
                             style: IconButton.styleFrom(
                               backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
                               foregroundColor: theme.colorScheme.primary,
@@ -345,7 +348,7 @@ class _SlotManagement extends ConsumerWidget {
                             IconButton(
                               onPressed: () => _showDeleteDialog(context, ref, slot),
                               icon: const Icon(Icons.delete_outline, size: 20),
-                              tooltip: 'スロットを削除',
+                              tooltip: l10n.deleteSlot,
                               style: IconButton.styleFrom(
                                 backgroundColor: Colors.red.withValues(alpha: 0.15),
                                 foregroundColor: Colors.red.shade400,
@@ -380,7 +383,7 @@ class _SlotManagement extends ConsumerWidget {
           child: OutlinedButton.icon(
             onPressed: () => _showAddDialog(context, ref),
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('スロットを追加'),
+            label: Text(l10n.addSlot),
             style: OutlinedButton.styleFrom(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -398,6 +401,7 @@ class _SlotManagement extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         final theme = Theme.of(context);
         return AlertDialog(
           shape: RoundedRectangleBorder(
@@ -406,7 +410,7 @@ class _SlotManagement extends ConsumerWidget {
           backgroundColor: theme.colorScheme.surface,
           contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
           title: Text(
-            'スロット名を変更',
+            l10n.renameSlot,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
@@ -453,7 +457,7 @@ class _SlotManagement extends ConsumerWidget {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'キャンセル',
+                l10n.cancel,
                 style: TextStyle(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -474,7 +478,7 @@ class _SlotManagement extends ConsumerWidget {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              child: const Text('保存'),
+              child: Text(l10n.save),
             ),
           ],
         );
@@ -486,6 +490,7 @@ class _SlotManagement extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         final theme = Theme.of(context);
         return AlertDialog(
           shape: RoundedRectangleBorder(
@@ -494,7 +499,7 @@ class _SlotManagement extends ConsumerWidget {
           backgroundColor: theme.colorScheme.surface,
           contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
           title: Text(
-            'スロットを削除',
+            l10n.deleteSlot,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
@@ -506,7 +511,7 @@ class _SlotManagement extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                '「${slot.name}」を削除しますか？\n過去の記録はそのまま残ります。',
+                l10n.deleteSlotConfirmDetail(slot.name),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -519,7 +524,7 @@ class _SlotManagement extends ConsumerWidget {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'キャンセル',
+                l10n.cancel,
                 style: TextStyle(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -532,7 +537,7 @@ class _SlotManagement extends ConsumerWidget {
                 Navigator.pop(context);
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('削除'),
+              child: Text(l10n.delete),
             ),
           ],
         );
@@ -550,6 +555,7 @@ class _SlotManagement extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         final theme = Theme.of(context);
         return AlertDialog(
           shape: RoundedRectangleBorder(
@@ -558,7 +564,7 @@ class _SlotManagement extends ConsumerWidget {
           backgroundColor: theme.colorScheme.surface,
           contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
           title: Text(
-            'スロットを追加',
+            l10n.addSlot,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
@@ -587,7 +593,7 @@ class _SlotManagement extends ConsumerWidget {
                     );
                   },
                   decoration: InputDecoration(
-                    hintText: '例: 仕事後',
+                    hintText: l10n.slotHintExample,
                     hintStyle: TextStyle(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                     ),
@@ -609,7 +615,7 @@ class _SlotManagement extends ConsumerWidget {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'キャンセル',
+                l10n.cancel,
                 style: TextStyle(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -630,7 +636,7 @@ class _SlotManagement extends ConsumerWidget {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              child: const Text('追加'),
+              child: Text(l10n.add),
             ),
           ],
         );
@@ -659,6 +665,7 @@ class _TagManagement extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -739,7 +746,7 @@ class _TagManagement extends ConsumerWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'タグを追加',
+                        l10n.addTag,
                         style: TextStyle(
                           fontSize: 13,
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
@@ -763,6 +770,7 @@ class _TagManagement extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
+          final l10n = AppLocalizations.of(context)!;
           final theme = Theme.of(context);
           return AlertDialog(
             shape: RoundedRectangleBorder(
@@ -771,7 +779,7 @@ class _TagManagement extends ConsumerWidget {
             backgroundColor: theme.colorScheme.surface,
             contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
             title: Text(
-              'タグを追加',
+              l10n.addTag,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
@@ -800,7 +808,7 @@ class _TagManagement extends ConsumerWidget {
                       );
                     },
                     decoration: InputDecoration(
-                      hintText: '例: 読書',
+                      hintText: l10n.tagHintExample,
                       hintStyle: TextStyle(
                         color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                       ),
@@ -819,7 +827,7 @@ class _TagManagement extends ConsumerWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '色を選択',
+                    l10n.chooseColor,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -840,7 +848,7 @@ class _TagManagement extends ConsumerWidget {
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(
-                  'キャンセル',
+                  l10n.cancel,
                   style: TextStyle(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -857,7 +865,7 @@ class _TagManagement extends ConsumerWidget {
                         Navigator.pop(context);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('同じ名前のタグが既に存在します')),
+                          SnackBar(content: Text(l10n.tagAlreadyExists)),
                         );
                       }
                     }
@@ -869,7 +877,7 @@ class _TagManagement extends ConsumerWidget {
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
-                child: const Text('追加'),
+                child: Text(l10n.add),
               ),
             ],
           );
@@ -885,6 +893,7 @@ class _TagManagement extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
+          final l10n = AppLocalizations.of(context)!;
           final theme = Theme.of(context);
           return AlertDialog(
             shape: RoundedRectangleBorder(
@@ -893,7 +902,7 @@ class _TagManagement extends ConsumerWidget {
             backgroundColor: theme.colorScheme.surface,
             contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
             title: Text(
-              'タグを編集',
+              l10n.editTag,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
@@ -937,7 +946,7 @@ class _TagManagement extends ConsumerWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '色を選択',
+                    l10n.chooseColor,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -958,7 +967,7 @@ class _TagManagement extends ConsumerWidget {
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(
-                  'キャンセル',
+                  l10n.cancel,
                   style: TextStyle(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -979,7 +988,7 @@ class _TagManagement extends ConsumerWidget {
                         Navigator.pop(context);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('同じ名前のタグが既に存在します')),
+                          SnackBar(content: Text(l10n.tagAlreadyExists)),
                         );
                       }
                     }
@@ -991,7 +1000,7 @@ class _TagManagement extends ConsumerWidget {
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
-                child: const Text('保存'),
+                child: Text(l10n.save),
               ),
             ],
           );
@@ -1004,6 +1013,7 @@ class _TagManagement extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         final theme = Theme.of(context);
         return AlertDialog(
           shape: RoundedRectangleBorder(
@@ -1012,7 +1022,7 @@ class _TagManagement extends ConsumerWidget {
           backgroundColor: theme.colorScheme.surface,
           contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
           title: Text(
-            'タグを削除',
+            l10n.deleteTag,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
@@ -1024,7 +1034,7 @@ class _TagManagement extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                '「${tag.name}」を削除しますか？\n過去の記録からは削除されません。',
+                l10n.deleteTagConfirmDetail(tag.name),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -1037,7 +1047,7 @@ class _TagManagement extends ConsumerWidget {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'キャンセル',
+                l10n.cancel,
                 style: TextStyle(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -1050,7 +1060,7 @@ class _TagManagement extends ConsumerWidget {
                 Navigator.pop(context);
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('削除'),
+              child: Text(l10n.delete),
             ),
           ],
         );
@@ -1235,6 +1245,7 @@ class _ThemeSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final themeMode = ref.watch(themeModeProvider);
 
     return Padding(
@@ -1242,7 +1253,7 @@ class _ThemeSelector extends ConsumerWidget {
       child: Row(
         children: [
           _ThemeOption(
-            label: 'ライト',
+            label: l10n.themeLight,
             isSelected: themeMode == ThemeMode.light,
             previewColors: [const Color(0xFFF8F9FA), const Color(0xFFEFF2F7)],
             previewTextColor: const Color(0xFF333333),
@@ -1250,7 +1261,7 @@ class _ThemeSelector extends ConsumerWidget {
           ),
           const SizedBox(width: 12),
           _ThemeOption(
-            label: 'ダーク',
+            label: l10n.themeDark,
             isSelected: themeMode == ThemeMode.dark,
             previewColors: [const Color(0xFF1A1A2E), const Color(0xFF16213E)],
             previewTextColor: const Color(0xFFEEEEEE),
@@ -1258,7 +1269,7 @@ class _ThemeSelector extends ConsumerWidget {
           ),
           const SizedBox(width: 12),
           _ThemeOption(
-            label: 'システム',
+            label: l10n.themeSystem,
             isSelected: themeMode == ThemeMode.system,
             previewColors: [const Color(0xFFF8F9FA), const Color(0xFF1A1A2E)],
             previewTextColor: const Color(0xFF888888),
@@ -1393,6 +1404,7 @@ class _StoreSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final purchaseState = ref.watch(purchaseStateProvider);
     final isPremium = purchaseState['premium'] ?? false;
@@ -1426,15 +1438,15 @@ class _StoreSection extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isPremium ? 'プレミアム会員' : 'プレミアムに登録',
+                      isPremium ? l10n.premiumMember : l10n.premiumRegister,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
                       isPremium
-                          ? 'すべての機能が利用可能です'
-                          : '広告非表示・スロット無制限・詳細分析',
+                          ? l10n.premiumActiveDesc
+                          : l10n.premiumInactiveDesc,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: isPremium
                             ? Colors.green
@@ -1467,6 +1479,7 @@ class _DebugMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final purchaseState = ref.watch(purchaseStateProvider);
     final debugOverride = ref.watch(debugFeatureOverrideProvider);
@@ -1481,8 +1494,8 @@ class _DebugMenu extends ConsumerWidget {
           _debugToggle(
             theme: theme,
             icon: Icons.bug_report,
-            label: 'デバッグモード無効化',
-            subtitle: 'リリース挙動テスト用',
+            label: l10n.debugDisable,
+            subtitle: l10n.debugDisableDesc,
             value: debugOverride,
             activeColor: Colors.orange,
             onChanged: (v) =>
@@ -1493,8 +1506,8 @@ class _DebugMenu extends ConsumerWidget {
           _debugToggle(
             theme: theme,
             icon: Icons.workspace_premium,
-            label: 'プレミアム状態',
-            subtitle: isPremium ? 'アクティブ' : '非アクティブ',
+            label: l10n.premiumStatus,
+            subtitle: isPremium ? l10n.premiumActive : l10n.premiumInactive,
             value: isPremium,
             activeColor: Colors.green,
             onChanged: (v) {
@@ -1507,8 +1520,8 @@ class _DebugMenu extends ConsumerWidget {
           _debugToggle(
             theme: theme,
             icon: Icons.block,
-            label: '広告除去状態',
-            subtitle: isAdFree ? '購入済み' : '未購入',
+            label: l10n.adFreeStatus,
+            subtitle: isAdFree ? l10n.purchased : l10n.notPurchased,
             value: isAdFree,
             activeColor: Colors.green,
             onChanged: (v) {
@@ -1521,8 +1534,8 @@ class _DebugMenu extends ConsumerWidget {
           _debugToggle(
             theme: theme,
             icon: Icons.play_circle_outline,
-            label: '動画アンロック状態',
-            subtitle: rewardedState.isUnlocked ? 'アンロック中' : 'ロック中',
+            label: l10n.videoUnlockStatus,
+            subtitle: rewardedState.isUnlocked ? l10n.videoUnlocked : l10n.videoLocked,
             value: rewardedState.isUnlocked,
             activeColor: Colors.blue,
             onChanged: (v) {
@@ -1548,12 +1561,12 @@ class _DebugMenu extends ConsumerWidget {
                           await prefs.remove('first_launch_date');
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('初回起動日をリセットしました')),
+                              SnackBar(content: Text(l10n.resetFirstLaunchDone)),
                             );
                           }
                         },
                         icon: const Icon(Icons.restart_alt, size: 16),
-                        label: const Text('初回起動日リセット', style: TextStyle(fontSize: 11)),
+                        label: Text(l10n.resetFirstLaunch, style: const TextStyle(fontSize: 11)),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -1562,11 +1575,11 @@ class _DebugMenu extends ConsumerWidget {
                         onPressed: () {
                           ref.read(rewardedAdProvider.notifier).debugResetTimestamp();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('動画タイムスタンプをリセットしました')),
+                            SnackBar(content: Text(l10n.resetVideoTimestampDone)),
                           );
                         },
                         icon: const Icon(Icons.videocam_off, size: 16),
-                        label: const Text('動画リセット', style: TextStyle(fontSize: 11)),
+                        label: Text(l10n.resetVideoTimestamp, style: const TextStyle(fontSize: 11)),
                         style: OutlinedButton.styleFrom(foregroundColor: Colors.orange),
                       ),
                     ),
@@ -1581,12 +1594,12 @@ class _DebugMenu extends ConsumerWidget {
                       await prefs.remove('onboarding_completed');
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('オンボーディングをリセットしました')),
+                          SnackBar(content: Text(l10n.resetOnboardingDone)),
                         );
                       }
                     },
                     icon: const Icon(Icons.school, size: 16),
-                    label: const Text('オンボーディングリセット', style: TextStyle(fontSize: 11)),
+                    label: Text(l10n.resetOnboarding, style: const TextStyle(fontSize: 11)),
                     style: OutlinedButton.styleFrom(foregroundColor: Colors.purple),
                   ),
                 ),
@@ -1671,58 +1684,62 @@ class _PasscodeSettingState extends ConsumerState<_PasscodeSetting> {
     final controller = TextEditingController();
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('パスコードを解除'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('現在のパスコードを入力してください'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              maxLength: 4,
-              obscureText: true,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'パスコード',
-                border: OutlineInputBorder(),
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+        return AlertDialog(
+          title: Text(l10n.disablePasscode),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.enterCurrentPasscode),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                obscureText: true,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: l10n.passcodeLabel,
+                  border: const OutlineInputBorder(),
+                ),
               ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final prefs = ref.read(sharedPreferencesProvider);
+                final savedHash = prefs.getString('passcode_hash');
+                final inputHash = sha256.convert(utf8.encode(controller.text)).toString();
+                if (inputHash == savedHash) {
+                  await prefs.setBool('passcode_enabled', false);
+                  await prefs.remove('passcode_hash');
+                  if (context.mounted) Navigator.pop(context, true);
+                } else {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l10n.incorrectPasscode)),
+                    );
+                  }
+                }
+              },
+              child: Text(l10n.disablePasscode),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final prefs = ref.read(sharedPreferencesProvider);
-              final savedHash = prefs.getString('passcode_hash');
-              final inputHash = sha256.convert(utf8.encode(controller.text)).toString();
-              if (inputHash == savedHash) {
-                await prefs.setBool('passcode_enabled', false);
-                await prefs.remove('passcode_hash');
-                if (context.mounted) Navigator.pop(context, true);
-              } else {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('パスコードが違います')),
-                  );
-                }
-              }
-            },
-            child: const Text('解除'),
-          ),
-        ],
-      ),
+        );
+      },
     );
     return result ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     return Padding(
@@ -1739,9 +1756,9 @@ class _PasscodeSettingState extends ConsumerState<_PasscodeSetting> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('パスコードロック', style: theme.textTheme.bodyMedium),
+                Text(l10n.passcodeLock, style: theme.textTheme.bodyMedium),
                 Text(
-                  'アプリ起動時にロックを要求',
+                  l10n.passcodeLockDesc,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),

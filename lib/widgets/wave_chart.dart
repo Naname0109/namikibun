@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/constants/design_tokens.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/models/slot.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
@@ -74,6 +75,7 @@ class _WaveChartState extends State<WaveChart> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final pointCount = _dataPointCount;
     final spots = _buildSpots();
 
@@ -111,7 +113,7 @@ class _WaveChartState extends State<WaveChart> {
                         children: [
                           MoodWaveIconMini(level: 5, size: 14),
                           const SizedBox(width: 2),
-                          Text('良い', style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                          Text(l10n.moodGood, style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         ],
                       ),
                     );
@@ -125,7 +127,7 @@ class _WaveChartState extends State<WaveChart> {
                         children: [
                           MoodWaveIconMini(level: 1, size: 14),
                           const SizedBox(width: 2),
-                          Text('悪い', style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                          Text(l10n.moodBad, style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         ],
                       ),
                     );
@@ -165,7 +167,7 @@ class _WaveChartState extends State<WaveChart> {
                 return touchedSpots.map((spot) {
                   final level = spot.y.toInt();
                   return LineTooltipItem(
-                    AppConstants.moodLabels[level] ?? '',
+                    AppConstants.localizedMoodLabels(l10n)[level] ?? '',
                     TextStyle(
                       color: AppConstants.moodColors[level],
                       fontWeight: FontWeight.bold,

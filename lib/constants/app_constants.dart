@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:namikibun/l10n/app_localizations.dart';
+
 /// アプリ全体で使用する定数
 class AppConstants {
   AppConstants._();
@@ -14,13 +16,13 @@ class AppConstants {
   // メモの最大文字数
   static const int memoMaxLength = 50;
 
-  // 気分レベルに対応するラベル
-  static const Map<int, String> moodLabels = {
-    1: 'とても悪い',
-    2: '悪い',
-    3: '普通',
-    4: '良い',
-    5: 'とても良い',
+  // 気分レベルに対応するラベル（ローカライズ版）
+  static Map<int, String> localizedMoodLabels(AppLocalizations l10n) => {
+    1: l10n.moodVeryBad,
+    2: l10n.moodBadLabel,
+    3: l10n.moodNormal,
+    4: l10n.moodGoodLabel,
+    5: l10n.moodVeryGood,
   };
 
   // 気分レベルに対応する色
@@ -32,7 +34,7 @@ class AppConstants {
     5: Color(0xFF4ECDC4), // ミントグリーン
   };
 
-  // デフォルトタグ
+  // デフォルトタグ（日本語）
   static const List<String> defaultTags = [
     '仕事',
     '運動',
@@ -40,6 +42,16 @@ class AppConstants {
     '人間関係',
     '天気',
     'その他',
+  ];
+
+  // デフォルトタグ（英語）
+  static const List<String> defaultTagsEn = [
+    'Work',
+    'Exercise',
+    'Meals',
+    'Social',
+    'Weather',
+    'Other',
   ];
 
   // タグに対応する色
@@ -50,9 +62,15 @@ class AppConstants {
     '人間関係': Color(0xFFE88EBF), // ピンク
     '天気': Color(0xFF7EC8E3),     // 水色
     'その他': Color(0xFF9E9E9E),   // グレー
+    'Work': Color(0xFF4A90D9),
+    'Exercise': Color(0xFF4ECDC4),
+    'Meals': Color(0xFFFF8C42),
+    'Social': Color(0xFFE88EBF),
+    'Weather': Color(0xFF7EC8E3),
+    'Other': Color(0xFF9E9E9E),
   };
 
-  // デフォルトスロット
+  // デフォルトスロット（日本語）
   static const List<Map<String, dynamic>> defaultSlots = [
     {
       'id': 'morning',
@@ -73,6 +91,34 @@ class AppConstants {
     {
       'id': 'evening',
       'name': '夜',
+      'order_index': 2,
+      'start_time': '18:00',
+      'end_time': '24:00',
+      'notify_time': '21:00',
+    },
+  ];
+
+  // デフォルトスロット（英語）
+  static const List<Map<String, dynamic>> defaultSlotsEn = [
+    {
+      'id': 'morning',
+      'name': 'Morning',
+      'order_index': 0,
+      'start_time': '06:00',
+      'end_time': '12:00',
+      'notify_time': '08:00',
+    },
+    {
+      'id': 'afternoon',
+      'name': 'Afternoon',
+      'order_index': 1,
+      'start_time': '12:00',
+      'end_time': '18:00',
+      'notify_time': '13:00',
+    },
+    {
+      'id': 'evening',
+      'name': 'Evening',
       'order_index': 2,
       'start_time': '18:00',
       'end_time': '24:00',
@@ -118,5 +164,3 @@ class AppConstants {
   // リワード動画アンロック時間（24時間）
   static const Duration rewardedAdUnlockDuration = Duration(hours: 24);
 }
-
-/// 商品情報モデル（表示用）- 廃止（ストア画面で直接定義）

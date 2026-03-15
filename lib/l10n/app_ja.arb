@@ -1,0 +1,308 @@
+{
+  "@@locale": "ja",
+
+  "appTitle": "波きぶん",
+  "appSubtitle": "気分の浮き沈みを可視化",
+
+  "home": "ホーム",
+  "stats": "統計",
+  "settings": "設定",
+
+  "todayRecordPrompt": "今日の気分を記録しましょう",
+  "todayAverageMood": "今日の平均気分",
+  "recordCount": "{count}件の記録",
+  "@recordCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "streak": "連続記録",
+  "streakDays": "連続{days}日記録中",
+  "@streakDays": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "days": "日",
+
+  "monthYear": "{year}年{month}月",
+  "@monthYear": {
+    "placeholders": {
+      "year": { "type": "int" },
+      "month": { "type": "int" }
+    }
+  },
+
+  "weekdayMon": "月",
+  "weekdayTue": "火",
+  "weekdayWed": "水",
+  "weekdayThu": "木",
+  "weekdayFri": "金",
+  "weekdaySat": "土",
+  "weekdaySun": "日",
+
+  "morning": "朝",
+  "afternoon": "昼",
+  "evening": "夜",
+  "tapToRecord": "タップして記録",
+  "addRecord": "記録を追加",
+  "moodGood": "良い",
+  "moodBad": "悪い",
+  "tryAddingAnother": "もう1つ記録してみましょう",
+  "tapToRecordToday": "タップして今日の気分を記録しましょう",
+
+  "slotMood": "{slotName}の気分",
+  "@slotMood": {
+    "placeholders": {
+      "slotName": { "type": "String" }
+    }
+  },
+  "chooseMood": "今の気分を選んでください",
+  "moodVeryBad": "とても悪い",
+  "moodBadLabel": "悪い",
+  "moodNormal": "普通",
+  "moodGoodLabel": "良い",
+  "moodVeryGood": "とても良い",
+  "quickNote": "ひとことメモ",
+  "tags": "タグ",
+  "photo": "写真",
+  "addPhoto": "写真を追加",
+  "addPhotoPremium": "写真を追加（プレミアム）",
+  "save": "保存",
+  "update": "更新",
+
+  "tagWork": "仕事",
+  "tagExercise": "運動",
+  "tagMeals": "食事",
+  "tagSocial": "人間関係",
+  "tagWeather": "天気",
+  "tagOther": "その他",
+
+  "weeklySummary": "今週のサマリー",
+  "thisWeekAverage": "今週の平均",
+  "vsLastWeek": "先週比",
+  "averageMoodByTime": "時間帯別の平均気分",
+  "monthlyMoodTrend": "月全体の気分推移",
+  "averageMoodByTag": "タグ別平均気分",
+  "tagCorrelationInsights": "タグ相関インサイト",
+  "thisMonthHighlights": "今月のハイライト",
+  "bestDay": "最高の日",
+  "worstDay": "最低の日",
+  "dayOfWeekPattern": "曜日別パターン",
+  "monthlyComparison": "月別比較",
+  "lastMonth": "先月",
+  "thisMonth": "今月",
+  "noData": "データなし",
+  "tagDaysMoodHigher": "「{tag}」タグの日は平均気分が{sign}{value}",
+  "@tagDaysMoodHigher": {
+    "placeholders": {
+      "tag": { "type": "String" },
+      "sign": { "type": "String" },
+      "value": { "type": "String" }
+    }
+  },
+  "watchVideoToUnlock": "動画を見て24h解放",
+  "unlockWithPremium": "プレミアムで常時解放",
+  "unlockWithPremiumShort": "プレミアムで解放",
+  "unlocked": "解放中",
+  "remaining": "残り",
+  "hours": "時間",
+  "detailedAnalytics": "詳細分析",
+  "detailedAnalyticsDesc": "月別比較・タグ相関・曜日別パターン",
+  "statsMinDays": "3日以上記録すると\n統計が表示されます",
+  "dayLabel": "{day}日",
+  "@dayLabel": {
+    "placeholders": {
+      "day": { "type": "int" }
+    }
+  },
+  "average": "平均 {value}",
+  "@average": {
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+  "improvedFromLastMonth": "先月より +{value} 改善",
+  "@improvedFromLastMonth": {
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+  "declinedFromLastMonth": "先月より {value} 低下",
+  "@declinedFromLastMonth": {
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+
+  "slotManagement": "スロット管理",
+  "tagManagement": "タグ管理",
+  "notifications": "通知設定",
+  "theme": "テーマ",
+  "themeLight": "ライト",
+  "themeDark": "ダーク",
+  "themeSystem": "システム",
+  "security": "セキュリティ",
+  "passcodeLock": "パスコードロック",
+  "passcodeLockDesc": "アプリ起動時にロックを要求",
+  "store": "ストア",
+  "openStore": "ストアを開く",
+  "purchased": "購入済み",
+  "version": "バージョン",
+  "privacyPolicy": "プライバシーポリシー",
+  "privacyPolicyDesc": "データはすべて端末内に保存されます",
+  "renameSlot": "スロット名を変更",
+  "addSlot": "スロットを追加",
+  "slotName": "スロット名",
+  "cancel": "キャンセル",
+  "delete": "削除",
+  "deleteSlotConfirm": "このスロットを削除しますか？",
+  "deleteSlotConfirmDetail": "「{name}」を削除しますか？\n過去の記録はそのまま残ります。",
+  "@deleteSlotConfirmDetail": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "addTag": "タグを追加",
+  "editTag": "タグを編集",
+  "tagName": "タグ名",
+  "chooseColor": "色を選択",
+  "deleteTag": "タグを削除",
+  "deleteTagConfirmDetail": "「{name}」を削除しますか？\n過去の記録からは削除されません。",
+  "@deleteTagConfirmDetail": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "deleteRecord": "記録を削除",
+  "deleteRecordConfirm": "この記録を削除しますか？",
+  "edit": "編集",
+  "slotHintExample": "例: 仕事後",
+  "tagHintExample": "例: 読書",
+  "add": "追加",
+  "tagAlreadyExists": "同じ名前のタグが既に存在します",
+  "notificationTime": "通知 {time}",
+  "@notificationTime": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "recorded": "記録済み",
+  "selectSlot": "スロットを選択",
+  "deleteSlot": "スロットを削除",
+  "other": "その他",
+
+  "namikibunStore": "波きぶん ストア",
+  "namikibunPremium": "波きぶんプレミアム",
+  "freeTrialDays": "7日間無料体験",
+  "monthly": "月額",
+  "yearly": "年額",
+  "perMonth": "月あたり",
+  "savePercent": "お得",
+  "noAds": "広告完全非表示",
+  "unlimitedSlots": "スロット無制限",
+  "photoAttachment": "写真添付",
+  "removeAdsOnly": "広告除去のみ",
+  "oneTimePurchase": "買い切り",
+  "forThoseWhoJustWantRemoveAds": "サブスクなしで広告だけ消したい方へ",
+  "restorePurchases": "購入を復元",
+  "restoringPurchases": "購入を復元中...",
+  "termsOfUse": "利用規約",
+  "premiumMember": "プレミアム会員",
+  "premiumRegister": "プレミアムに登録",
+  "premiumActiveDesc": "すべての機能が利用可能です",
+  "premiumInactiveDesc": "広告非表示・スロット無制限・詳細分析",
+  "perMonthPrice": "月あたり¥400 — 31%お得",
+  "yearlyPrice": "年額 {price}",
+  "@yearlyPrice": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "monthlyPrice": "月額 {price}",
+  "@monthlyPrice": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+
+  "welcomeToNamikibun": "ようこそ波きぶんへ",
+  "onboardingDesc1": "毎日の気分を波のように記録して\n自分の心の動きを見つめましょう",
+  "recordMoodIn5Levels": "気分を5段階で記録",
+  "reviewOnCalendar": "カレンダーで振り返り",
+  "onboardingDesc3": "月間の気分の波をカレンダーで確認\n統計やグラフで傾向を分析できます",
+  "letsGetStarted": "さっそく始めましょう",
+  "onboardingDesc4": "朝・昼・夜の3つの時間帯で\n気分を記録してみましょう",
+  "getStarted": "始める",
+  "skip": "スキップ",
+  "next": "次へ",
+
+  "enterPasscode": "パスコードを入力",
+  "newPasscode": "新しいパスコード",
+  "confirmPasscode": "パスコードを確認",
+  "passcodesDoNotMatch": "パスコードが一致しません",
+  "useBiometricAuth": "生体認証を使用",
+  "unlockApp": "アプリのロックを解除",
+  "incorrectPasscode": "パスコードが違います",
+  "setPasscode": "パスコードを設定",
+  "reenterPasscode": "もう一度入力",
+  "disablePasscode": "パスコードを解除",
+  "enterCurrentPasscode": "現在のパスコードを入力してください",
+  "passcodeLabel": "パスコード",
+
+  "letsRecordMood": "気分を記録してみましょう",
+  "loading": "読み込み中...",
+  "errorOccurred": "エラーが発生しました",
+  "error": "エラー",
+  "errorWithMessage": "エラー: {message}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "message": { "type": "String" }
+    }
+  },
+
+  "tagLoadFailed": "タグの読み込みに失敗しました",
+  "memoHint": "会議が長かった",
+
+  "debugOptions": "開発者オプション",
+  "debugDisable": "デバッグモード無効化",
+  "debugDisableDesc": "リリース挙動テスト用",
+  "premiumStatus": "プレミアム状態",
+  "premiumActive": "アクティブ",
+  "premiumInactive": "非アクティブ",
+  "adFreeStatus": "広告除去状態",
+  "notPurchased": "未購入",
+  "videoUnlockStatus": "動画アンロック状態",
+  "videoUnlocked": "アンロック中",
+  "videoLocked": "ロック中",
+  "resetFirstLaunch": "初回起動日リセット",
+  "resetFirstLaunchDone": "初回起動日をリセットしました",
+  "resetVideoTimestamp": "動画リセット",
+  "resetVideoTimestampDone": "動画タイムスタンプをリセットしました",
+  "resetOnboarding": "オンボーディングリセット",
+  "resetOnboardingDone": "オンボーディングをリセットしました",
+
+  "notificationTitle": "波きぶん",
+  "notificationBody": "{slotName}の気分を記録しましょう",
+  "@notificationBody": {
+    "placeholders": {
+      "slotName": { "type": "String" }
+    }
+  },
+  "notificationChannelName": "気分リマインダー",
+  "notificationChannelDesc": "気分記録のリマインダー通知",
+
+  "slotFilterAll": "全体",
+  "moodByTimeSlot": "スロット別気分表示",
+  "slotFilterPremiumDesc": "スロットを選択して時間帯ごとの気分を確認",
+  "premiumOnlyFeature": "この機能はプレミアム限定です",
+
+  "displayDate": "{month}月{day}日 {weekday}曜日",
+  "@displayDate": {
+    "placeholders": {
+      "month": { "type": "int" },
+      "day": { "type": "int" },
+      "weekday": { "type": "String" }
+    }
+  }
+}

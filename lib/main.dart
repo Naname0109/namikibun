@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:namikibun/app.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/providers/theme_provider.dart';
 import 'package:namikibun/screens/onboarding_screen.dart';
 import 'package:namikibun/screens/passcode_screen.dart';
@@ -77,13 +77,8 @@ class _AppWithSplashState extends ConsumerState<_AppWithSplash> {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
-      locale: const Locale('ja', 'JP'),
-      supportedLocales: const [Locale('ja', 'JP')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: home,
     );
   }

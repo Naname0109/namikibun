@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/constants/design_tokens.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/providers/purchase_provider.dart';
 import 'package:namikibun/services/purchase_service.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
@@ -13,13 +14,14 @@ class StoreScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final purchaseState = ref.watch(purchaseStateProvider);
     final isPremium = purchaseState['premium'] ?? false;
     final isAdFree = (purchaseState['remove_ads'] ?? false) || isPremium;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('波きぶん ストア'),
+        title: Text(l10n.namikibunStore),
         centerTitle: true,
       ),
       body: ListView(
@@ -48,11 +50,11 @@ class StoreScreen extends ConsumerWidget {
               onPressed: () {
                 ref.read(purchaseStateProvider.notifier).restorePurchases();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('購入を復元中...')),
+                  SnackBar(content: Text(l10n.restoringPurchases)),
                 );
               },
               child: Text(
-                '購入を復元',
+                l10n.restorePurchases,
                 style: TextStyle(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -67,7 +69,7 @@ class StoreScreen extends ConsumerWidget {
                 // TODO: 利用規約ページ
               },
               child: Text(
-                '利用規約',
+                l10n.termsOfUse,
                 style: TextStyle(
                   fontSize: 12,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -90,6 +92,7 @@ class _PremiumCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final monthlyProduct =
         PurchaseService().getProduct(AppConstants.premiumMonthlyProductId);
     final yearlyProduct =
@@ -129,7 +132,7 @@ class _PremiumCard extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '7日間無料体験',
+                  l10n.freeTrialDays,
                   style: TextStyle(
                     color: theme.colorScheme.primary,
                     fontSize: 12,
@@ -150,7 +153,7 @@ class _PremiumCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '波きぶんプレミアム',
+                  l10n.namikibunPremium,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -165,11 +168,12 @@ class _PremiumCard extends ConsumerWidget {
 
             // 機能一覧
             ...[
-              '広告完全非表示',
-              'スロット無制限',
-              '写真添付',
-              'パスコードロック',
-              '詳細分析',
+              l10n.noAds,
+              l10n.unlimitedSlots,
+              l10n.photoAttachment,
+              l10n.passcodeLock,
+              l10n.detailedAnalytics,
+              l10n.moodByTimeSlot,
             ].map((feature) => Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Row(
@@ -202,14 +206,14 @@ class _PremiumCard extends ConsumerWidget {
                   color: Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check, color: Colors.green, size: 20),
-                    SizedBox(width: 8),
+                    const Icon(Icons.check, color: Colors.green, size: 20),
+                    const SizedBox(width: 8),
                     Text(
-                      'プレミアム会員',
-                      style: TextStyle(
+                      l10n.premiumMember,
+                      style: const TextStyle(
                         color: Colors.green,
                         fontWeight: FontWeight.bold,
                       ),
@@ -220,7 +224,7 @@ class _PremiumCard extends ConsumerWidget {
             else ...[
               // 年額ボタン（おすすめ）
               Text(
-                '月あたり¥400 — 31%お得',
+                l10n.perMonthPrice,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -242,7 +246,7 @@ class _PremiumCard extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: Text(
-                    '年額 ${yearlyProduct?.price ?? '¥4,800'}',
+                    l10n.yearlyPrice(yearlyProduct?.price ?? '¥4,800'),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -266,7 +270,7 @@ class _PremiumCard extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: Text(
-                    '月額 ${monthlyProduct?.price ?? '¥580'}',
+                    l10n.monthlyPrice(monthlyProduct?.price ?? '¥580'),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -291,6 +295,7 @@ class _AdRemovalCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final product =
         PurchaseService().getProduct(AppConstants.removeAdsProductId);
 
@@ -324,13 +329,13 @@ class _AdRemovalCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '広告除去のみ',
+                  l10n.removeAdsOnly,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
-                  'サブスクなしで広告だけ消したい方へ',
+                  l10n.forThoseWhoJustWantRemoveAds,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -340,9 +345,9 @@ class _AdRemovalCard extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           if (isAdFree)
-            const Text(
-              '購入済み',
-              style: TextStyle(
+            Text(
+              l10n.purchased,
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.green,

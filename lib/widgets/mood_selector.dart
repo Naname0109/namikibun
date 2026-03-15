@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
 
 class MoodSelector extends StatefulWidget {
@@ -71,7 +72,8 @@ class _MoodSelectorState extends State<MoodSelector>
       children: List.generate(AppConstants.moodLevelMax, (index) {
         final level = index + 1;
         final isSelected = widget.selectedLevel == level;
-        final label = AppConstants.moodLabels[level]!;
+        final l10n = AppLocalizations.of(context)!;
+        final label = AppConstants.localizedMoodLabels(l10n)[level]!;
         final color = AppConstants.moodColors[level]!;
 
         return AnimatedBuilder(

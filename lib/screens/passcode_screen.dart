@@ -4,6 +4,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 String _hashPasscode(String passcode) {
@@ -24,17 +25,17 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
   final _auth = LocalAuthentication();
   String _input = '';
   String? _errorMessage;
-  bool _autoAttempted = false;
+  bool _biometricAttempted = false;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _tryBiometricAuto();
   }
 
   Future<void> _tryBiometricAuto() async {
-    if (_autoAttempted) return;
-    _autoAttempted = true;
+    if (_biometricAttempted) return;
+    _biometricAttempted = true;
     await _tryBiometric();
   }
 
@@ -44,8 +45,9 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
       final isDeviceSupported = await _auth.isDeviceSupported();
 
       if (canCheck || isDeviceSupported) {
+        final l10n = AppLocalizations.of(context)!;
         final authenticated = await _auth.authenticate(
-          localizedReason: 'アプリのロックを解除',
+          localizedReason: l10n.unlockApp,
           options: const AuthenticationOptions(
             biometricOnly: true,
             stickyAuth: true,
@@ -77,8 +79,9 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
         widget.onUnlocked();
       } else {
         HapticFeedback.heavyImpact();
+        final l10n = AppLocalizations.of(context)!;
         setState(() {
-          _errorMessage = 'パスコードが違います';
+          _errorMessage = l10n.incorrectPasscode;
           _input = '';
         });
       }
@@ -97,6 +100,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: Container(
@@ -115,7 +119,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
               const Icon(Icons.lock_outline, size: 48, color: Colors.white),
               const SizedBox(height: 16),
               Text(
-                'パスコードを入力',
+                l10n.enterPasscode,
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -293,8 +297,9 @@ class _PasscodeSetupDialogState extends State<_PasscodeSetupDialog> {
           await prefs.setBool('passcode_enabled', true);
           if (mounted) Navigator.pop(context, true);
         } else {
+          final l10n = AppLocalizations.of(context)!;
           setState(() {
-            _error = 'パスコードが一致しません';
+            _error = l10n.passcodesDoNotMatch;
             _confirmPasscode = null;
             _isConfirming = false;
             _passcode = '';
@@ -307,10 +312,11 @@ class _PasscodeSetupDialogState extends State<_PasscodeSetupDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final currentInput = _isConfirming ? (_confirmPasscode ?? '') : _passcode;
 
     return AlertDialog(
-      title: Text(_isConfirming ? 'もう一度入力' : 'パスコードを設定'),
+      title: Text(_isConfirming ? l10n.reenterPasscode : l10n.setPasscode),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -357,7 +363,7 @@ class _PasscodeSetupDialogState extends State<_PasscodeSetupDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('キャンセル'),
+          child: Text(l10n.cancel),
         ),
       ],
     );

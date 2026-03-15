@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/constants/design_tokens.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/models/mood_record.dart';
 import 'package:namikibun/models/slot.dart';
 import 'package:namikibun/providers/mood_provider.dart';
@@ -23,6 +24,7 @@ class DayDetailScreen extends ConsumerWidget {
     final slotsAsync = ref.watch(slotProvider);
     final recordsAsync = ref.watch(moodRecordsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       decoration: BoxDecoration(
@@ -66,17 +68,17 @@ class DayDetailScreen extends ConsumerWidget {
                   data: (slots) => recordsAsync.when(
                     data: (records) {
                       if (records.isEmpty) {
-                        return const EmptyState(
-                          message: '気分を記録してみましょう',
+                        return EmptyState(
+                          message: l10n.letsRecordMood,
                         );
                       }
                       return WaveChart(slots: slots, records: records);
                     },
                     loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('エラー: $e')),
+                    error: (e, _) => Center(child: Text('${l10n.error}: $e')),
                   ),
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('エラー: $e')),
+                  error: (e, _) => Center(child: Text('${l10n.error}: $e')),
                 ),
               ),
 
@@ -90,10 +92,10 @@ class DayDetailScreen extends ConsumerWidget {
                       date: selectedDate,
                     ),
                     loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('エラー: $e')),
+                    error: (e, _) => Center(child: Text('${l10n.error}: $e')),
                   ),
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('エラー: $e')),
+                  error: (e, _) => Center(child: Text('${l10n.error}: $e')),
                 ),
               ),
 
@@ -123,6 +125,7 @@ class _DateNavigator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -132,7 +135,7 @@ class _DateNavigator extends StatelessWidget {
           visualDensity: VisualDensity.compact,
         ),
         Text(
-          AppDateUtils.formatDisplayDate(date),
+          AppDateUtils.formatDisplayDate(date, l10n),
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -166,6 +169,7 @@ class _SlotList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dateString = AppDateUtils.formatDate(date);
+    final l10n = AppLocalizations.of(context)!;
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -198,7 +202,7 @@ class _SlotList extends ConsumerWidget {
           child: FilledButton.tonalIcon(
             onPressed: () => _showSlotPicker(context, ref, dateString),
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('記録を追加'),
+            label: Text(l10n.addRecord),
             style: FilledButton.styleFrom(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusM),
@@ -211,13 +215,13 @@ class _SlotList extends ConsumerWidget {
         if (records.isEmpty)
           _buildBottomMessage(
             context,
-            '🌊 タップして今日の気分を記録しましょう',
+            '🌊 ${l10n.tapToRecordToday}',
             showSleepingIcon: true,
           )
         else if (records.length == 1)
           _buildBottomMessage(
             context,
-            'もう1つ記録してみましょう',
+            l10n.tryAddingAnother,
           ),
       ],
     );
@@ -249,6 +253,7 @@ class _SlotList extends ConsumerWidget {
   }
 
   void _showSlotPicker(BuildContext context, WidgetRef ref, String dateString) {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -273,7 +278,7 @@ class _SlotList extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'スロットを選択',
+                l10n.selectSlot,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -288,7 +293,7 @@ class _SlotList extends ConsumerWidget {
                   color: hasRecord ? Colors.green : null,
                 ),
                 title: Text(slot.name),
-                subtitle: hasRecord ? const Text('記録済み') : null,
+                subtitle: hasRecord ? Text(l10n.recorded) : null,
                 enabled: !hasRecord,
                 onTap: () {
                   Navigator.pop(context);
@@ -367,6 +372,7 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final hasRecord = widget.record != null;
     final moodLevel = widget.record?.moodLevel;
     final color = moodLevel != null
@@ -491,8 +497,8 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
                       hasRecord
                           ? (widget.record!.memo?.isNotEmpty == true
                               ? widget.record!.memo!
-                              : AppConstants.moodLabels[moodLevel]!)
-                          : 'タップして記録',
+                              : AppConstants.localizedMoodLabels(l10n)[moodLevel]!)
+                          : l10n.tapToRecord,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: hasRecord ? 0.7 : 0.6,
@@ -515,7 +521,7 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        AppConstants.moodLabels[moodLevel]!,
+                        AppConstants.localizedMoodLabels(l10n)[moodLevel]!,
                         style: TextStyle(
                           fontSize: 11,
                           color: color,
@@ -536,6 +542,7 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
   }
 
   void _showContextMenu(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -544,7 +551,7 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
           children: [
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('編集'),
+              title: Text(l10n.edit),
               onTap: () {
                 Navigator.pop(context);
                 widget.onTap();
@@ -552,7 +559,7 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
             ),
             ListTile(
               leading: Icon(Icons.delete, color: Colors.red.shade400),
-              title: Text('削除', style: TextStyle(color: Colors.red.shade400)),
+              title: Text(l10n.delete, style: TextStyle(color: Colors.red.shade400)),
               onTap: () {
                 Navigator.pop(context);
                 _confirmDelete(context);
@@ -565,15 +572,16 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
   }
 
   void _confirmDelete(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('記録を削除'),
-        content: const Text('この記録を削除しますか？'),
+        title: Text(l10n.deleteRecord),
+        content: Text(l10n.deleteRecordConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -581,7 +589,7 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
               widget.onDelete();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('削除'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

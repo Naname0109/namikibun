@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:sqflite/sqflite.dart';
 
@@ -80,8 +81,12 @@ class DatabaseService {
       'CREATE INDEX idx_mood_records_slot_id ON mood_records(slot_id)',
     );
 
+    // 端末言語に応じてデフォルトデータを選択
+    final isJapanese = _isJapaneseLocale();
+    final slots = isJapanese ? AppConstants.defaultSlots : AppConstants.defaultSlotsEn;
+
     // デフォルトスロットの挿入
-    for (final slot in AppConstants.defaultSlots) {
+    for (final slot in slots) {
       await db.insert('slots', {
         'id': slot['id'],
         'name': slot['name'],
@@ -116,15 +121,31 @@ class DatabaseService {
     }
   }
 
+  /// 端末の言語が日本語かどうかを判定
+  static bool _isJapaneseLocale() {
+    final locale = PlatformDispatcher.instance.locale;
+    return locale.languageCode == 'ja';
+  }
+
   Future<void> _insertDefaultTags(Database db) async {
-    const defaultTagData = [
-      {'name': '仕事', 'colorHex': 'FF4A90D9'},
-      {'name': '運動', 'colorHex': 'FF4ECDC4'},
-      {'name': '食事', 'colorHex': 'FFFF8C42'},
-      {'name': '人間関係', 'colorHex': 'FFE88EBF'},
-      {'name': '天気', 'colorHex': 'FF7EC8E3'},
-      {'name': 'その他', 'colorHex': 'FF9E9E9E'},
-    ];
+    final isJapanese = _isJapaneseLocale();
+    final defaultTagData = isJapanese
+        ? const [
+            {'name': '仕事', 'colorHex': 'FF4A90D9'},
+            {'name': '運動', 'colorHex': 'FF4ECDC4'},
+            {'name': '食事', 'colorHex': 'FFFF8C42'},
+            {'name': '人間関係', 'colorHex': 'FFE88EBF'},
+            {'name': '天気', 'colorHex': 'FF7EC8E3'},
+            {'name': 'その他', 'colorHex': 'FF9E9E9E'},
+          ]
+        : const [
+            {'name': 'Work', 'colorHex': 'FF4A90D9'},
+            {'name': 'Exercise', 'colorHex': 'FF4ECDC4'},
+            {'name': 'Meals', 'colorHex': 'FFFF8C42'},
+            {'name': 'Social', 'colorHex': 'FFE88EBF'},
+            {'name': 'Weather', 'colorHex': 'FF7EC8E3'},
+            {'name': 'Other', 'colorHex': 'FF9E9E9E'},
+          ];
     for (int i = 0; i < defaultTagData.length; i++) {
       final tag = defaultTagData[i];
       await db.insert(

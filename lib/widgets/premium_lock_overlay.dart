@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:namikibun/constants/design_tokens.dart';
+import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/providers/purchase_provider.dart';
 import 'package:namikibun/providers/rewarded_ad_provider.dart';
 import 'package:namikibun/services/ad_service.dart';
@@ -23,6 +24,7 @@ class PremiumLockOverlay extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final rewardedState = ref.watch(rewardedAdProvider);
 
     return Stack(
@@ -61,7 +63,7 @@ class PremiumLockOverlay extends ConsumerWidget {
                           ? () => ref.read(rewardedAdProvider.notifier).showRewardedAd()
                           : null,
                       icon: const Icon(Icons.play_circle_outline, size: 18),
-                      label: const Text('動画を見て24h解放'),
+                      label: Text(l10n.watchVideoToUnlock),
                       style: FilledButton.styleFrom(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -80,7 +82,7 @@ class PremiumLockOverlay extends ConsumerWidget {
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     ),
-                    child: const Text('プレミアムで常時解放'),
+                    child: Text(l10n.unlockWithPremium),
                   ),
                 ],
               ),
@@ -99,6 +101,7 @@ class StatsPlusPurchaseCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -123,14 +126,14 @@ class StatsPlusPurchaseCard extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '詳細分析',
+            l10n.detailedAnalytics,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            '月別比較・タグ相関・曜日別パターン',
+            l10n.detailedAnalyticsDesc,
             style: TextStyle(
               fontSize: 12,
               color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -145,7 +148,7 @@ class StatsPlusPurchaseCard extends ConsumerWidget {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
             ),
-            child: const Text('プレミアムで解放'),
+            child: Text(l10n.unlockWithPremiumShort),
           ),
         ],
       ),
