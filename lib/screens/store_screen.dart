@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/constants/design_tokens.dart';
@@ -65,11 +66,43 @@ class StoreScreen extends ConsumerWidget {
           // 利用規約
           Center(
             child: TextButton(
-              onPressed: () {
-                // TODO: 利用規約ページ
+              onPressed: () async {
+                final url = Uri.parse(AppConstants.termsOfUseUrl);
+                if (!await launchUrl(url,
+                    mode: LaunchMode.externalApplication)) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l10n.termsOfUse)),
+                    );
+                  }
+                }
               },
               child: Text(
                 l10n.termsOfUse,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+          ),
+
+          // プライバシーポリシー
+          Center(
+            child: TextButton(
+              onPressed: () async {
+                final url = Uri.parse(AppConstants.privacyPolicyUrl);
+                if (!await launchUrl(url,
+                    mode: LaunchMode.externalApplication)) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l10n.privacyPolicy)),
+                    );
+                  }
+                }
+              },
+              child: Text(
+                l10n.privacyPolicy,
                 style: TextStyle(
                   fontSize: 12,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),

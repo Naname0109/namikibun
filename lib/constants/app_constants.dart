@@ -6,6 +6,12 @@ import 'package:namikibun/l10n/app_localizations.dart';
 class AppConstants {
   AppConstants._();
 
+  // 外部リンク
+  static const String termsOfUseUrl =
+      'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+  static const String privacyPolicyUrl =
+      'https://naname0109.github.io/namikibun/';
+
   // 日付境界: 午前4時
   static const int dateBoundaryHour = 4;
 

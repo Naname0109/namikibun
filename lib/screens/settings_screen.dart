@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import 'package:namikibun/constants/app_constants.dart';
 import 'package:namikibun/constants/design_tokens.dart';
 import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/models/slot.dart';
@@ -143,6 +145,17 @@ class SettingsScreen extends ConsumerWidget {
                   icon: Icons.privacy_tip_outlined,
                   label: l10n.privacyPolicy,
                   subtitle: l10n.privacyPolicyDesc,
+                  onTap: () async {
+                    final url = Uri.parse(AppConstants.privacyPolicyUrl);
+                    if (!await launchUrl(url,
+                        mode: LaunchMode.externalApplication)) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(l10n.privacyPolicy)),
+                        );
+                      }
+                    }
+                  },
                 ),
               ],
             ),
@@ -206,17 +219,21 @@ class _InfoRow extends StatelessWidget {
     this.icon,
     this.value,
     this.subtitle,
+    this.onTap,
   });
 
   final IconData? icon;
   final String label;
   final String? value;
   final String? subtitle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
@@ -249,8 +266,11 @@ class _InfoRow extends StatelessWidget {
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
+          if (onTap != null)
+            Icon(Icons.chevron_right, size: 18, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
         ],
       ),
+    ),
     );
   }
 }
