@@ -141,7 +141,7 @@ class AppConstants {
   // 課金関連 - Product IDs（サブスクモデル）
   static const String premiumMonthlyProductId = 'namikibun_premium_monthly';
   static const String premiumYearlyProductId = 'namikibun_premium_yearly';
-  static const String removeAdsProductId = 'namikibun_remove_ads';
+  static const String removeAdsProductId = 'namikibun_remove_ads2';
 
   static const Set<String> allProductIds = {
     premiumMonthlyProductId,
