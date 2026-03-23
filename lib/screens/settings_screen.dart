@@ -25,6 +25,7 @@ import 'package:namikibun/services/notification_service.dart';
 import 'package:namikibun/services/purchase_service.dart';
 import 'package:namikibun/widgets/ad_banner.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
+import 'package:namikibun/widgets/responsive_wrapper.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -36,6 +37,7 @@ class SettingsScreen extends ConsumerWidget {
     final tagsAsync = ref.watch(tagProvider);
 
     return SafeArea(
+      child: ResponsiveWrapper(
       child: Column(
         children: [
           Expanded(
@@ -174,6 +176,7 @@ class SettingsScreen extends ConsumerWidget {
         // バナー広告
         const AdBanner(),
       ]),
+      ),
     );
   }
 

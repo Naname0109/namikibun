@@ -14,6 +14,7 @@ import 'package:namikibun/widgets/detailed_stats_section.dart';
 import 'package:namikibun/widgets/empty_state.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
 import 'package:namikibun/widgets/premium_lock_overlay.dart';
+import 'package:namikibun/widgets/responsive_wrapper.dart';
 
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
@@ -25,6 +26,7 @@ class StatsScreen extends ConsumerWidget {
     final statsAsync = ref.watch(monthlyStatsProvider);
 
     return SafeArea(
+      child: ResponsiveWrapper(
       child: Column(
         children: [
           // 月ヘッダー
@@ -69,6 +71,7 @@ class StatsScreen extends ConsumerWidget {
           // バナー広告
           const AdBanner(),
         ],
+      ),
       ),
     );
   }

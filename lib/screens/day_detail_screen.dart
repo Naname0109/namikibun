@@ -13,6 +13,7 @@ import 'package:namikibun/utils/date_utils.dart';
 import 'package:namikibun/widgets/ad_banner.dart';
 import 'package:namikibun/widgets/empty_state.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
+import 'package:namikibun/widgets/responsive_wrapper.dart';
 import 'package:namikibun/widgets/wave_chart.dart';
 
 class DayDetailScreen extends ConsumerWidget {
@@ -59,6 +60,7 @@ class DayDetailScreen extends ConsumerWidget {
           centerTitle: true,
         ),
         body: SafeArea(
+          child: ResponsiveWrapper(
           child: Column(
             children: [
               // 波形グラフ
@@ -102,6 +104,7 @@ class DayDetailScreen extends ConsumerWidget {
               // バナー広告
               const AdBanner(),
             ],
+          ),
           ),
         ),
       ),
@@ -256,6 +259,7 @@ class _SlotList extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
+      constraints: const BoxConstraints(maxWidth: ResponsiveWrapper.maxContentWidth),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusL)),
       ),
@@ -545,6 +549,7 @@ class _PremiumSlotCardState extends State<_PremiumSlotCard>
     final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
+      constraints: const BoxConstraints(maxWidth: ResponsiveWrapper.maxContentWidth),
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,

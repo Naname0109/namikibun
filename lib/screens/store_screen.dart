@@ -8,6 +8,7 @@ import 'package:namikibun/l10n/app_localizations.dart';
 import 'package:namikibun/providers/purchase_provider.dart';
 import 'package:namikibun/services/purchase_service.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
+import 'package:namikibun/widgets/responsive_wrapper.dart';
 
 class StoreScreen extends ConsumerWidget {
   const StoreScreen({super.key});
@@ -19,98 +20,112 @@ class StoreScreen extends ConsumerWidget {
     final purchaseState = ref.watch(purchaseStateProvider);
     final isPremium = purchaseState['premium'] ?? false;
     final isAdFree = (purchaseState['remove_ads'] ?? false) || isPremium;
+    final isWide = ResponsiveWrapper.isWide(context);
+    final monthlyProduct =
+        PurchaseService().getProduct(AppConstants.premiumMonthlyProductId);
+    final yearlyProduct =
+        PurchaseService().getProduct(AppConstants.premiumYearlyProductId);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.namikibunStore),
         centerTitle: true,
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-        children: [
-          // ヘッダー波ちゃん
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: MoodWaveIcon(level: 5, size: 56),
+      body: ResponsiveWrapper(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            // ヘッダー波ちゃん
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: MoodWaveIcon(level: 5, size: isWide ? 72 : 56),
+              ),
             ),
-          ),
 
-          // プレミアムカード
-          _PremiumCard(isPremium: isPremium),
-          const SizedBox(height: 16),
+            // プレミアムカード
+            _PremiumCard(isPremium: isPremium),
+            const SizedBox(height: 16),
 
-          // 広告除去（買い切り）カード
-          if (!isPremium)
-            _AdRemovalCard(isAdFree: isAdFree),
-          const SizedBox(height: 24),
+            // 広告除去（買い切り）カード
+            if (!isPremium)
+              _AdRemovalCard(isAdFree: isAdFree),
+            const SizedBox(height: 24),
 
-          // 購入を復元
-          Center(
-            child: TextButton(
-              onPressed: () {
-                ref.read(purchaseStateProvider.notifier).restorePurchases();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.restoringPurchases)),
-                );
-              },
-              child: Text(
-                l10n.restorePurchases,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            // 購入を復元
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  ref.read(purchaseStateProvider.notifier).restorePurchases();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.restoringPurchases)),
+                  );
+                },
+                child: Text(
+                  l10n.restorePurchases,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // 利用規約
-          Center(
-            child: TextButton(
-              onPressed: () async {
-                final url = Uri.parse(AppConstants.termsOfUseUrl);
-                if (!await launchUrl(url,
-                    mode: LaunchMode.externalApplication)) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(l10n.termsOfUse)),
-                    );
-                  }
-                }
-              },
+            // サブスクリプション情報
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
-                l10n.termsOfUse,
+                '${l10n.namikibunPremium}: ${l10n.monthlyPrice(monthlyProduct?.price ?? '¥580')} / ${l10n.yearlyPrice(yearlyProduct?.price ?? '¥4,800')}',
                 style: TextStyle(
                   fontSize: 12,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
+                textAlign: TextAlign.center,
               ),
             ),
-          ),
 
-          // プライバシーポリシー
-          Center(
-            child: TextButton(
-              onPressed: () async {
-                final url = Uri.parse(AppConstants.privacyPolicyUrl);
-                if (!await launchUrl(url,
-                    mode: LaunchMode.externalApplication)) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(l10n.privacyPolicy)),
-                    );
-                  }
-                }
-              },
-              child: Text(
-                l10n.privacyPolicy,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
+            // 利用規約・プライバシーポリシー
+            Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () => launchUrl(
+                      Uri.parse(AppConstants.termsOfUseUrl),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    child: Text(
+                      l10n.termsOfUse,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '|',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => launchUrl(
+                      Uri.parse(AppConstants.privacyPolicyUrl),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    child: Text(
+                      l10n.privacyPolicy,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -126,6 +141,7 @@ class _PremiumCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final isWide = ResponsiveWrapper.isWide(context);
     final monthlyProduct =
         PurchaseService().getProduct(AppConstants.premiumMonthlyProductId);
     final yearlyProduct =
@@ -153,7 +169,7 @@ class _PremiumCard extends ConsumerWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(isWide ? 28 : 20),
         child: Column(
           children: [
             // バッジ
@@ -168,7 +184,7 @@ class _PremiumCard extends ConsumerWidget {
                   l10n.freeTrialDays,
                   style: TextStyle(
                     color: theme.colorScheme.primary,
-                    fontSize: 12,
+                    fontSize: isWide ? 14 : 12,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -182,13 +198,13 @@ class _PremiumCard extends ConsumerWidget {
                 Icon(
                   Icons.workspace_premium,
                   color: isPremium ? Colors.green : theme.colorScheme.primary,
-                  size: 24,
+                  size: isWide ? 28 : 24,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   l10n.namikibunPremium,
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: isWide ? 24 : 20,
                     fontWeight: FontWeight.bold,
                     color: isPremium
                         ? Colors.green
@@ -208,12 +224,12 @@ class _PremiumCard extends ConsumerWidget {
               l10n.detailedAnalytics,
               l10n.moodByTimeSlot,
             ].map((feature) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
+                  padding: EdgeInsets.only(bottom: isWide ? 8 : 6),
                   child: Row(
                     children: [
                       Icon(
                         Icons.check_circle,
-                        size: 18,
+                        size: isWide ? 22 : 18,
                         color: isPremium
                             ? Colors.green
                             : theme.colorScheme.primary,
@@ -222,7 +238,7 @@ class _PremiumCard extends ConsumerWidget {
                       Text(
                         feature,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: isWide ? 16 : 14,
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                         ),
                       ),
@@ -259,7 +275,7 @@ class _PremiumCard extends ConsumerWidget {
               Text(
                 l10n.perMonthPrice,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: isWide ? 14 : 12,
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.primary,
                 ),
@@ -276,12 +292,12 @@ class _PremiumCard extends ConsumerWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: EdgeInsets.symmetric(vertical: isWide ? 18 : 14),
                   ),
                   child: Text(
                     l10n.yearlyPrice(yearlyProduct?.price ?? '¥4,800'),
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: TextStyle(
+                      fontSize: isWide ? 18 : 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -300,12 +316,12 @@ class _PremiumCard extends ConsumerWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: EdgeInsets.symmetric(vertical: isWide ? 18 : 14),
                   ),
                   child: Text(
                     l10n.monthlyPrice(monthlyProduct?.price ?? '¥580'),
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: TextStyle(
+                      fontSize: isWide ? 18 : 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

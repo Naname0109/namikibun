@@ -16,6 +16,7 @@ import 'package:namikibun/providers/mood_provider.dart';
 import 'package:namikibun/providers/tag_provider.dart';
 import 'package:namikibun/services/feature_gate.dart';
 import 'package:namikibun/widgets/mood_selector.dart';
+import 'package:namikibun/widgets/responsive_wrapper.dart';
 import 'package:namikibun/widgets/particle_effect.dart';
 import 'package:go_router/go_router.dart';
 
@@ -30,6 +31,7 @@ Future<void> showRecordBottomSheet(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
+    constraints: const BoxConstraints(maxWidth: ResponsiveWrapper.maxContentWidth),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
         top: Radius.circular(DesignTokens.radiusL),

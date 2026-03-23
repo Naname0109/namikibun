@@ -14,6 +14,7 @@ import 'package:namikibun/services/feature_gate.dart';
 import 'package:namikibun/utils/date_utils.dart';
 import 'package:namikibun/widgets/ad_banner.dart';
 import 'package:namikibun/widgets/mood_wave_icon.dart';
+import 'package:namikibun/widgets/responsive_wrapper.dart';
 
 /// スロットのテーマカラーパレット（order_index順）
 const _slotThemeColors = [
@@ -58,6 +59,7 @@ class CalendarScreen extends ConsumerWidget {
     final slotFilter = ref.watch(selectedSlotFilterProvider);
 
     return SafeArea(
+      child: ResponsiveWrapper(
       child: Column(
         children: [
           // 連続記録日数バッジ
@@ -151,6 +153,7 @@ class CalendarScreen extends ConsumerWidget {
           // バナー広告
           const AdBanner(),
         ],
+      ),
       ),
     );
   }
