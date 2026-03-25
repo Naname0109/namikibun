@@ -397,9 +397,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get freeTrialDays => '7-day free trial, auto-charged after';
 
   @override
-  String autoChargeNotice(String monthlyPrice, String yearlyPrice) {
-    return 'After the free trial ends, you will be automatically charged $monthlyPrice/month (monthly plan) or $yearlyPrice/year (yearly plan). You can cancel anytime.';
+  String get autoChargeWarning =>
+      'You will be automatically charged after the free trial ends';
+
+  @override
+  String yearlyTrialDesc(String price, String perMonth) {
+    return '7 days free → $price/year ($perMonth/month)';
   }
+
+  @override
+  String monthlyTrialDesc(String price) {
+    return '7 days free → $price/month';
+  }
+
+  @override
+  String get cancelAnytimeNotice =>
+      'You can cancel anytime. Cancel during the free trial to avoid being charged.';
 
   @override
   String get monthly => 'Monthly';

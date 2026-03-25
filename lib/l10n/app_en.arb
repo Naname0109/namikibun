@@ -132,13 +132,21 @@
   "namikibunStore": "Namikibun Store",
   "namikibunPremium": "Namikibun Premium",
   "freeTrialDays": "7-day free trial, auto-charged after",
-  "autoChargeNotice": "After the free trial ends, you will be automatically charged {monthlyPrice}/month (monthly plan) or {yearlyPrice}/year (yearly plan). You can cancel anytime.",
-  "@autoChargeNotice": {
+  "autoChargeWarning": "You will be automatically charged after the free trial ends",
+  "yearlyTrialDesc": "7 days free → {price}/year ({perMonth}/month)",
+  "@yearlyTrialDesc": {
     "placeholders": {
-      "monthlyPrice": { "type": "String" },
-      "yearlyPrice": { "type": "String" }
+      "price": { "type": "String" },
+      "perMonth": { "type": "String" }
     }
   },
+  "monthlyTrialDesc": "7 days free → {price}/month",
+  "@monthlyTrialDesc": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "cancelAnytimeNotice": "You can cancel anytime. Cancel during the free trial to avoid being charged.",
   "monthly": "Monthly",
   "yearly": "Yearly",
   "perMonth": "per month",

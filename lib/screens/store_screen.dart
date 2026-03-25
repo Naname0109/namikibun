@@ -47,6 +47,21 @@ class StoreScreen extends ConsumerWidget {
 
             // プレミアムカード
             _PremiumCard(isPremium: isPremium),
+            const SizedBox(height: 12),
+
+            // キャンセルポリシー
+            if (!isPremium)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Text(
+                  l10n.cancelAnytimeNotice,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             const SizedBox(height: 16),
 
             // 広告除去（買い切り）カード
@@ -194,6 +209,19 @@ class _PremiumCard extends ConsumerWidget {
                   ),
                 ),
               ),
+            if (!isPremium)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  l10n.autoChargeWarning,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepOrange.shade700,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             const SizedBox(height: 12),
 
             // タイトル
@@ -308,6 +336,21 @@ class _PremiumCard extends ConsumerWidget {
                   ),
                 ),
               ),
+              // 年額トライアル説明
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  l10n.yearlyTrialDesc(
+                    yearlyProduct?.price ?? '¥4,800',
+                    '¥400',
+                  ),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
               const SizedBox(height: 8),
               // 月額ボタン
               SizedBox(
@@ -332,18 +375,16 @@ class _PremiumCard extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              // 自動課金の説明
+              // 月額トライアル説明
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  l10n.autoChargeNotice(
+                  l10n.monthlyTrialDesc(
                     monthlyProduct?.price ?? '¥580',
-                    yearlyProduct?.price ?? '¥4,800',
                   ),
                   style: TextStyle(
-                    fontSize: 11,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                   textAlign: TextAlign.center,
                 ),

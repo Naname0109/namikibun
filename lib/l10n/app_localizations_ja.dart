@@ -396,9 +396,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get freeTrialDays => '7日間無料体験　終了後自動課金';
 
   @override
-  String autoChargeNotice(String monthlyPrice, String yearlyPrice) {
-    return '無料体験期間終了後、月額$monthlyPrice（月額プラン選択時）または年額$yearlyPrice（年額プラン選択時）が自動的に課金されます。キャンセルはいつでも可能です。';
+  String get autoChargeWarning => '無料体験終了後、自動的に課金されます';
+
+  @override
+  String yearlyTrialDesc(String price, String perMonth) {
+    return '7日間無料　→　年額$price（月あたり$perMonth）';
   }
+
+  @override
+  String monthlyTrialDesc(String price) {
+    return '7日間無料　→　月額$price';
+  }
+
+  @override
+  String get cancelAnytimeNotice =>
+      'サブスクリプションはいつでもキャンセルできます。無料体験期間中にキャンセルすれば課金されません。';
 
   @override
   String get monthly => '月額';
