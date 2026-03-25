@@ -20,7 +20,7 @@ class StoreScreen extends ConsumerWidget {
     final purchaseState = ref.watch(purchaseStateProvider);
     final isPremium = purchaseState['premium'] ?? false;
     final isAdFree = (purchaseState['remove_ads'] ?? false) || isPremium;
-    final isWide = ResponsiveWrapper.isWide(context);
+    final isTablet = ResponsiveWrapper.isTablet(context);
     final monthlyProduct =
         PurchaseService().getProduct(AppConstants.premiumMonthlyProductId);
     final yearlyProduct =
@@ -33,13 +33,15 @@ class StoreScreen extends ConsumerWidget {
       ),
       body: ResponsiveWrapper(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          padding: EdgeInsets.fromLTRB(
+            isTablet ? 24 : 16, 8, isTablet ? 24 : 16, 32,
+          ),
           children: [
             // ヘッダー波ちゃん
             Center(
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: MoodWaveIcon(level: 5, size: isWide ? 72 : 56),
+                child: MoodWaveIcon(level: 5, size: isTablet ? 84 : 56),
               ),
             ),
 
@@ -141,7 +143,7 @@ class _PremiumCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final isWide = ResponsiveWrapper.isWide(context);
+    final isTablet = ResponsiveWrapper.isTablet(context);
     final monthlyProduct =
         PurchaseService().getProduct(AppConstants.premiumMonthlyProductId);
     final yearlyProduct =
@@ -169,13 +171,16 @@ class _PremiumCard extends ConsumerWidget {
         ),
       ),
       child: Padding(
-        padding: EdgeInsets.all(isWide ? 28 : 20),
+        padding: EdgeInsets.all(isTablet ? 32 : 20),
         child: Column(
           children: [
             // バッジ
             if (!isPremium)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 16 : 12,
+                  vertical: isTablet ? 6 : 4,
+                ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
@@ -184,7 +189,7 @@ class _PremiumCard extends ConsumerWidget {
                   l10n.freeTrialDays,
                   style: TextStyle(
                     color: theme.colorScheme.primary,
-                    fontSize: isWide ? 14 : 12,
+                    fontSize: isTablet ? 16 : 12,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -198,13 +203,13 @@ class _PremiumCard extends ConsumerWidget {
                 Icon(
                   Icons.workspace_premium,
                   color: isPremium ? Colors.green : theme.colorScheme.primary,
-                  size: isWide ? 28 : 24,
+                  size: isTablet ? 34 : 24,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   l10n.namikibunPremium,
                   style: TextStyle(
-                    fontSize: isWide ? 24 : 20,
+                    fontSize: isTablet ? 28 : 20,
                     fontWeight: FontWeight.bold,
                     color: isPremium
                         ? Colors.green
@@ -224,12 +229,12 @@ class _PremiumCard extends ConsumerWidget {
               l10n.detailedAnalytics,
               l10n.moodByTimeSlot,
             ].map((feature) => Padding(
-                  padding: EdgeInsets.only(bottom: isWide ? 8 : 6),
+                  padding: EdgeInsets.only(bottom: isTablet ? 10 : 6),
                   child: Row(
                     children: [
                       Icon(
                         Icons.check_circle,
-                        size: isWide ? 22 : 18,
+                        size: isTablet ? 24 : 18,
                         color: isPremium
                             ? Colors.green
                             : theme.colorScheme.primary,
@@ -238,7 +243,7 @@ class _PremiumCard extends ConsumerWidget {
                       Text(
                         feature,
                         style: TextStyle(
-                          fontSize: isWide ? 16 : 14,
+                          fontSize: isTablet ? 18 : 14,
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                         ),
                       ),
@@ -275,7 +280,7 @@ class _PremiumCard extends ConsumerWidget {
               Text(
                 l10n.perMonthPrice,
                 style: TextStyle(
-                  fontSize: isWide ? 14 : 12,
+                  fontSize: isTablet ? 16 : 12,
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.primary,
                 ),
@@ -292,12 +297,12 @@ class _PremiumCard extends ConsumerWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: isWide ? 18 : 14),
+                    padding: EdgeInsets.symmetric(vertical: isTablet ? 22 : 14),
                   ),
                   child: Text(
                     l10n.yearlyPrice(yearlyProduct?.price ?? '¥4,800'),
                     style: TextStyle(
-                      fontSize: isWide ? 18 : 16,
+                      fontSize: isTablet ? 22 : 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -316,15 +321,31 @@ class _PremiumCard extends ConsumerWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: isWide ? 18 : 14),
+                    padding: EdgeInsets.symmetric(vertical: isTablet ? 22 : 14),
                   ),
                   child: Text(
                     l10n.monthlyPrice(monthlyProduct?.price ?? '¥580'),
                     style: TextStyle(
-                      fontSize: isWide ? 18 : 16,
+                      fontSize: isTablet ? 22 : 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // 自動課金の説明
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  l10n.autoChargeNotice(
+                    monthlyProduct?.price ?? '¥580',
+                    yearlyProduct?.price ?? '¥4,800',
+                  ),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ],

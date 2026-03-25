@@ -394,7 +394,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get namikibunPremium => 'Namikibun Premium';
 
   @override
-  String get freeTrialDays => '7-day free trial';
+  String get freeTrialDays => '7-day free trial, auto-charged after';
+
+  @override
+  String autoChargeNotice(String monthlyPrice, String yearlyPrice) {
+    return 'After the free trial ends, you will be automatically charged $monthlyPrice/month (monthly plan) or $yearlyPrice/year (yearly plan). You can cancel anytime.';
+  }
 
   @override
   String get monthly => 'Monthly';

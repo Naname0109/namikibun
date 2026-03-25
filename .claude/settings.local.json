@@ -79,7 +79,10 @@
       "Bash(python3 -c \"\nfrom PIL import Image\nimport os\nd = os.path.expanduser\\('~/Desktop/appstore_screenshots'\\)\nfor i in range\\(1, 6\\):\n    for f in os.listdir\\(d\\):\n        if f.startswith\\(f'ss{i}'\\):\n            path = os.path.join\\(d, f\\)\n            img = Image.open\\(path\\)\n            img = img.resize\\(\\(1284, 2778\\), Image.LANCZOS\\)\n            img.save\\(path\\)\n            print\\(f'{f}: resized to 1284x2778'\\)\n\")",
       "Bash(pip3 install:*)",
       "Bash(cd ~/Documents/namikibun && open ios/Runner.xcworkspace)",
-      "Bash(python3 -c \"\nfrom PIL import Image\nimport os\nd = os.path.expanduser\\('~/Desktop/appstore_screenshots'\\)\nos.makedirs\\(d + '/ipad', exist_ok=True\\)\nfor i in range\\(1, 6\\):\n    for f in os.listdir\\(d\\):\n        if f.startswith\\(f'ss{i}'\\) and f.endswith\\('.png'\\):\n            img = Image.open\\(os.path.join\\(d, f\\)\\)\n            img = img.resize\\(\\(2048, 2732\\), Image.LANCZOS\\)\n            img.save\\(os.path.join\\(d, 'ipad', f\\)\\)\n            print\\(f'iPad: {f} resized to 2048x2732'\\)\n\")"
+      "Bash(python3 -c \"\nfrom PIL import Image\nimport os\nd = os.path.expanduser\\('~/Desktop/appstore_screenshots'\\)\nos.makedirs\\(d + '/ipad', exist_ok=True\\)\nfor i in range\\(1, 6\\):\n    for f in os.listdir\\(d\\):\n        if f.startswith\\(f'ss{i}'\\) and f.endswith\\('.png'\\):\n            img = Image.open\\(os.path.join\\(d, f\\)\\)\n            img = img.resize\\(\\(2048, 2732\\), Image.LANCZOS\\)\n            img.save\\(os.path.join\\(d, 'ipad', f\\)\\)\n            print\\(f'iPad: {f} resized to 2048x2732'\\)\n\")",
+      "Bash(cd ~/Documents/namikibun/ios && pod deintegrate 2>&1 && pod install 2>&1)",
+      "Bash(cd ~/Documents/namikibun/ios && pod install 2>&1)",
+      "Bash(grep -l \"ResponsiveWrapper\" /Users/akebi/Documents/namikibun/lib/screens/*.dart)"
     ]
   }
 }

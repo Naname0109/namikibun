@@ -821,8 +821,14 @@ abstract class AppLocalizations {
   /// No description provided for @freeTrialDays.
   ///
   /// In ja, this message translates to:
-  /// **'7日間無料体験'**
+  /// **'7日間無料体験　終了後自動課金'**
   String get freeTrialDays;
+
+  /// No description provided for @autoChargeNotice.
+  ///
+  /// In ja, this message translates to:
+  /// **'無料体験期間終了後、月額{monthlyPrice}（月額プラン選択時）または年額{yearlyPrice}（年額プラン選択時）が自動的に課金されます。キャンセルはいつでも可能です。'**
+  String autoChargeNotice(String monthlyPrice, String yearlyPrice);
 
   /// No description provided for @monthly.
   ///

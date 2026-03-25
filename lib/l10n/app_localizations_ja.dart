@@ -393,7 +393,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get namikibunPremium => '波きぶんプレミアム';
 
   @override
-  String get freeTrialDays => '7日間無料体験';
+  String get freeTrialDays => '7日間無料体験　終了後自動課金';
+
+  @override
+  String autoChargeNotice(String monthlyPrice, String yearlyPrice) {
+    return '無料体験期間終了後、月額$monthlyPrice（月額プラン選択時）または年額$yearlyPrice（年額プラン選択時）が自動的に課金されます。キャンセルはいつでも可能です。';
+  }
 
   @override
   String get monthly => '月額';

@@ -194,7 +194,14 @@
 
   "namikibunStore": "波きぶん ストア",
   "namikibunPremium": "波きぶんプレミアム",
-  "freeTrialDays": "7日間無料体験",
+  "freeTrialDays": "7日間無料体験　終了後自動課金",
+  "autoChargeNotice": "無料体験期間終了後、月額{monthlyPrice}（月額プラン選択時）または年額{yearlyPrice}（年額プラン選択時）が自動的に課金されます。キャンセルはいつでも可能です。",
+  "@autoChargeNotice": {
+    "placeholders": {
+      "monthlyPrice": { "type": "String" },
+      "yearlyPrice": { "type": "String" }
+    }
+  },
   "monthly": "月額",
   "yearly": "年額",
   "perMonth": "月あたり",

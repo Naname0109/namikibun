@@ -5,10 +5,11 @@ class ResponsiveWrapper extends StatelessWidget {
 
   final Widget child;
 
-  static const double maxContentWidth = 600;
+  static const double maxContentWidth = 700;
+  static const double tabletBreakpoint = 600;
 
-  static bool isWide(BuildContext context) =>
-      MediaQuery.sizeOf(context).width >= maxContentWidth;
+  static bool isTablet(BuildContext context) =>
+      MediaQuery.sizeOf(context).shortestSide >= tabletBreakpoint;
 
   @override
   Widget build(BuildContext context) {
